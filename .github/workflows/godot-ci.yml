@@ -42,16 +42,45 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
+    # The repo is scaffolded ahead of the Godot project, so there is a window in
+    # which there is genuinely nothing to test. Skip cleanly rather than failing:
+    # a red badge that means "not built yet" trains people to ignore red badges.
+    - name: Check for a runnable Godot project
+      id: probe
+      run: |
+        if [ ! -f project.godot ]; then
+          reason="no project.godot at the repo root"
+        elif [ ! -f addons/gut/gut_cmdln.gd ]; then
+          reason="addons/gut/gut_cmdln.gd is missing"
+        fi
+
+        if [ -n "${reason:-}" ]; then
+          echo "runnable=false" >> "$GITHUB_OUTPUT"
+          echo "Skipping tests: $reason."
+          {
+            echo "### Tests skipped"
+            echo
+            echo "No test run was attempted because $reason."
+            echo
+            echo "See \`CLAUDE.md\` → Status and \`CONTRIBUTING.md\` → Repo setup."
+          } >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "runnable=true" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Setup Godot
+      if: steps.probe.outputs.runnable == 'true'
       uses: chickensoft-games/setup-godot@v2
       with:
         version: 4.6.1
         use-dotnet: false
 
     - name: Import assets
+      if: steps.probe.outputs.runnable == 'true'
       run: godot --headless --import
 
     - name: Run GUT tests
+      if: steps.probe.outputs.runnable == 'true'
       run: |
         set -o pipefail
         # -v so "Leaked instance:" lines reach the log for the leak check below.
@@ -64,18 +93,19 @@ jobs:
           2>&1 | tee test_output.log
 
     - name: Check for resource leaks
-      if: ${{ ! cancelled() }}
+      if: ${{ ! cancelled() && steps.probe.outputs.runnable == 'true' }}
       run: bash scripts/check_test_leaks.sh test_output.log
 
     - name: Test Report
       uses: dorny/test-reporter@v3
-      if: ${{ ! cancelled() }}
+      if: ${{ ! cancelled() && steps.probe.outputs.runnable == 'true' }}
       with:
         name: Godot - GUT Tests
         path: "*.xml"
         reporter: java-junit
 
     - name: Upload Artifact
+      if: steps.probe.outputs.runnable == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: test
