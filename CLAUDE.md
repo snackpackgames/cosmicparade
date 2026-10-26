@@ -6,14 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cosmic Parade is a **3D** game built with **Godot 4.6** using **GDScript**.
 
-> **TODO:** describe the genre, the core loop, and the art direction. Until this
-> section is filled in, Claude has no vision context to work against — say so
-> rather than guessing.
+**Genre:** mosaic deckbuilding · pet management · cozy sandbox room decorator ·
+crafting. Two halves that feed each other — a cozy realm-tending half (decorate, grow,
+cook, befriend) and a competitive tile-laying half where what you made becomes a deck
+played against other gods.
+
+**Core loop:** arrange furniture → furniture projects domain influence → overlapping
+influence melds or burgeons into fused biomes and terrain → grow fruit and flowers →
+offer fruit at shrines → entities arrive, wander and bond → at the Altar, summon
+entities and fire tiles they glaze → tiles fill bags and decks → parade out to play a
+pageant → win adherents and materials → Swell the realm, unlock new clays and dyes,
+attract stronger entities. Progression pressure comes from the top end: stronger
+entities want better offerings, which want more specific fused domains, which want more
+furniture and a bigger realm.
+
+**Art direction:** pixel art styled to look like laid mosaic tile — a higher pixel
+count per sprite than classic pixel art, but everything reads as tesserae. Floating
+rocks against a shifting skybox of cosmic dust and plasma. Neon magical gnomes in
+space; science, tech and magic meet in high fantasy. **This is a 3D game** — the
+pixel-mosaic look sits on 3D geometry, the hex board has real dimension, and terrain
+grows up out of it (see `documentation/adr/0001`).
+
+**`README.md` at the repo root is the authoritative design document** — scenes,
+pageant rules, systems, settled decisions and open questions. Read it before design
+work. `documentation/adr/` records why each settled decision went the way it did.
 
 ## Status: scaffold only
 
 This repo currently holds project configuration ported from the `fiber` project —
-tooling scripts, CI, lint/format config, Claude Code skills and conventions — and
+tooling scripts, CI, lint/format config, Claude Code skills and conventions — plus the
+design document (`README.md`) and its decision records (`documentation/adr/`), and
 **no Godot project yet**. `CONTRIBUTING.md → Repo setup` lists what is still missing
 (`project.godot`, `addons/gut/`, labels, milestones, project board). Commands below
 that invoke Godot or GUT will not work until those exist.
@@ -77,10 +99,27 @@ See `CONTRIBUTING.md → AI Tooling` for full setup including optional Godot MCP
 
 ## Architecture
 
-> **TODO:** document the directory layout, entry point, and each system as it is
-> built. Fiber kept this as a table of system docs under `documentation/` plus a
-> `documentation/ARCHITECTURE.md` for directory and resource conventions — worth
-> repeating here once there is a second system to cross-reference.
+**Nothing is built yet** — there is no `project.godot`, no entry point and no
+directory layout to document. Do not infer one from this section; it records only what
+the design already commits to.
+
+The design's scene list (`README.md → Scenes`) is what the layout will have to carry:
+Title → Character Creation → Realm (shrines, furniture, Altar with Summon and Fire,
+Shipyard Mooring) → Cosmic Parade (pageants on a parade ground). The Realm and the
+Cosmic Parade are the two heavyweight scenes and the two halves of the game.
+
+Two structural decisions already constrain how systems get written:
+
+- **Data in Resources, logic in scripts** (existing convention, below) is load-bearing
+  for three systems in particular. The fusion lookup table (`adr/0004`), tile slot
+  assembly (`adr/0006`) and per-entity glaze lists (`adr/0007`) are all `.tres` data
+  with no per-instance authoring.
+- **Terrain generation is two systems, not one** — biome fill across overlap interiors,
+  and feature spawning on boundaries (`adr/0008`).
+
+Fiber kept architecture as a table of system docs under `documentation/` plus a
+`documentation/ARCHITECTURE.md` for directory and resource conventions — worth
+repeating here once there is a second system to cross-reference.
 
 `documentation/plans/` holds implementation plan files for features in progress. When resuming work on a feature, check here for the step-by-step plan before touching code.
 
@@ -88,10 +127,24 @@ See `CONTRIBUTING.md → AI Tooling` for full setup including optional Godot MCP
 
 ### 3D Physics Layers
 
-> **TODO:** assign and document layer names in `project.godot` under
-> `[layer_names]` (`3d_physics/layer_N`) before adding collision bodies, then
-> record the assignments as a table here. Pick the layer/mask combination that
-> matches a new body's role rather than introducing new bits ad hoc.
+> **TODO: no layers are assigned yet** — there is no `project.godot` to assign them
+> in. Assign and document layer names there under `[layer_names]`
+> (`3d_physics/layer_N`) before adding the first collision body, then record the
+> assignments as a table here. Pick the layer/mask combination that matches a new
+> body's role rather than introducing new bits ad hoc.
+
+The design implies these distinct collision roles, listed to inform that first
+assignment — **this is not a layer table and nothing is reserved yet**:
+
+- Board spaces that accept a tile placement (realm hex spaces; parade ground spaces)
+- Placed tiles and furniture as volumes (`adr/0001`)
+- Domain influence zones, which overlap on purpose and need overlap queries
+- Walkable biome ground, versus blocking terrain features (`adr/0008`)
+- Roaming entities, and the player's pointer or camera picking against all of the above
+
+Note that domain influence zones exist to overlap — several at once, by design — so
+whatever carries them must tolerate many simultaneous overlaps rather than treating
+one as a collision to resolve.
 
 Godot gives 3D physics its own 32 layers, independent of the 2D set. `Area3D`,
 `StaticBody3D`, `CharacterBody3D` and `RigidBody3D` all read `collision_layer`
@@ -100,7 +153,7 @@ number means nothing on its own until it is named in `project.godot`.
 
 ### Notes Directory
 
-`notes/` contains in-progress research, code review findings, dev notes, and other working material. **Notes are not a finalized source of truth** — treat them as useful context and background, not authoritative specs. For authoritative specs, use `documentation/`. Check `notes/` before starting work on a feature to surface relevant history or open questions.
+`notes/` contains in-progress research, code review findings, dev notes, and other working material. **Notes are not a finalized source of truth** — treat them as useful context and background, not authoritative specs. For authoritative specs, use `README.md` (game design) and `documentation/`. Check `notes/` before starting work on a feature to surface relevant history or open questions.
 
 ## Conventions
 
