@@ -1,0 +1,7 @@
+- [Plan location preference](feedback_plan_location.md) — Save plans to documentation/plans/, not docs/superpowers/plans/
+- [Godot add_child before global_position](feedback_godot_add_child_before_global_position.md) — always add_child() first, then set global_position; setting it before add_child treats it as local position
+- [Prefer autofree in GUT tests](feedback_autofree_tests.md) — use autofree() in before_each instead of manual free()/queue_free() in after_each
+- [Save test output to logs/](feedback_test_logs.md) — tee test runs to logs/test_run.log and grep from there instead of re-running
+- [Split commits logically](feedback_logical_commits.md) — group related changes into separate logical commits, not one big commit
+- [Commit message body style](feedback_commit_bullets.md) — use bullet points, not paragraphs, in commit body details
+- [Never use git worktrees](feedback_no_worktrees.md) — worktrees cause lint hook blind spots (CI fails locally-invisible errors) and permission re-prompting; work on feature branches in the main directory instead

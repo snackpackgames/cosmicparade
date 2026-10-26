@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "geequlim.godot-tools",
+        "editorconfig.editorconfig",
+        "eamodio.gitlens",
+        "GeForceLegend.vscode-godot-shader-formatter"
+    ]
+}

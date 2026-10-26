@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+env:
+  EXPORT_NAME: cosmicparade
+  GODOT_VERSION: 4.6.1
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+
+    - name: Install gdtoolkit
+      run: pip install gdtoolkit==4.*
+
+    - name: Run gdlint
+      run: bash scripts/lint.sh
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      GODOT: godot
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup Godot
+      uses: chickensoft-games/setup-godot@v2
+      with:
+        version: 4.6.1
+        use-dotnet: false
+
+    - name: Import assets
+      run: godot --headless --import
+
+    - name: Run GUT tests
+      run: |
+        set -o pipefail
+        # -v so "Leaked instance:" lines reach the log for the leak check below.
+        godot -v -d --headless \
+          -s res://addons/gut/gut_cmdln.gd \
+          -gdir=res://test/unit/ \
+          -ginclude_subdirs \
+          -gjunit_xml_file="./test_results.xml" \
+          -gexit \
+          2>&1 | tee test_output.log
+
+    - name: Check for resource leaks
+      if: ${{ ! cancelled() }}
+      run: bash scripts/check_test_leaks.sh test_output.log
+
+    - name: Test Report
+      uses: dorny/test-reporter@v3
+      if: ${{ ! cancelled() }}
+      with:
+        name: Godot - GUT Tests
+        path: "*.xml"
+        reporter: java-junit
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: test
+        path: test_results*.xml

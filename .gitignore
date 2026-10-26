@@ -1,0 +1,53 @@
+# Godot 4+ specific ignores
+.godot/
+.nomedia
+/android/
+
+# Godot-specific ignores
+.import/
+export.cfg
+export_credentials.cfg
+
+# Export build output
+/build/
+
+*.tmp
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# Test Output
+**/test_results.*
+test_output.log
+logs/
+
+# Local environment
+.env
+
+# Claude
+.claude/settings.local.json
+
+# Superpowers
+.superpowers/
+
+# Git worktrees
+.worktrees/
+.claude/worktrees
+
+# User Scripts
+user.*
+
+# Backup and Temporary Files
+~*
+*.tmp
+
+# Blender incremental saves (the .blend itself IS committed — Godot 4 imports it directly)
+*.blend[0-9]
+
+# Node dependencies for CI scripts
+node_modules/

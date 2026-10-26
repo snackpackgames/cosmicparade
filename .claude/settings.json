@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Agent",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(bash scripts/*)",
+      "Bash(bash /home/beebul/.claude/plugins/cache/claude-plugins-official/superpowers/*)",
+      "Bash(gdlint *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:heroiclabs.com)"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "snackpackgames-claude-plugins@snackpackgames": true
+  },
+  "allowedTools": [
+    "Agent",
+    "Bash(git *)",
+    "Bash(gh *)",
+    "Bash(bash scripts/*)",
+    "WebSearch",
+    "WebFetch(domain:github.com)",
+    "WebFetch(domain:raw.githubusercontent.com)",
+    "WebFetch(domain:heroiclabs.com)"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+    "dirs": ["res://test/unit/"],
+    "include_subdirs": true,
+    "should_exit": false,
+    "pre_run_script": "res://test/hooks/pre_run_hook.gd"
+}

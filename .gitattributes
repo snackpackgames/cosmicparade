@@ -1,0 +1,41 @@
+# Normalize EOL for all files that Git considers text files.
+* text=auto eol=lf
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.bmp binary
+*.svg binary
+
+# Audio
+*.wav binary
+*.ogg binary
+*.mp3 binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# 3D models and scenes
+*.glb binary
+*.gltf binary
+*.bin binary
+*.fbx binary
+*.obj binary
+*.dae binary
+*.blend binary
+
+# Compressed / 3D texture formats
+*.ktx2 binary
+*.basis binary
+*.dds binary
+*.tga binary
+
+# Other binary assets
+*.res binary
+*.exr binary
+*.hdr binary

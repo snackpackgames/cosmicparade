@@ -1,0 +1,6 @@
+ignored-classes:
+  - "GutTest"
+
+max-line-length: 100
+max-returns: 12
+max-public-methods: 40
