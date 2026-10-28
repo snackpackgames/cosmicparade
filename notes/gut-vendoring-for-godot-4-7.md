@@ -80,6 +80,21 @@ so.
 This also answers the map's open fog about whether CI needs an import/class-cache gate:
 it already has one, and it must keep it.
 
+### A second route to the same silent pass
+
+`docs/compile-design-document` (unmerged, [#1](https://github.com/snackpackgames/cosmicparade/pull/1))
+adds a probe step to `godot-ci.yml` that skips the whole test job when either
+`project.godot` or **`addons/gut/gut_cmdln.gd`** is missing, by design, so a
+scaffold-only repo reports green rather than red. That is the right call for the
+current window, and it corroborates §5 — CI expects the vendored addon to be present in
+the checkout, by path.
+
+It does mean there are now **two** ways to get a green test job that ran nothing: no
+vendored GUT (skipped by the probe) and an un-imported class cache (`quit(0)` inside
+GUT). The first is intentional and announces itself in the step summary. The second is
+silent. Once `addons/gut/` lands, the probe stops firing and the import step becomes the
+only thing standing between CI and a meaningless pass.
+
 ## 4. Our `.gutconfig.json` is entirely valid
 
 All four keys this repo uses are real options in v9.7.1, verified in
