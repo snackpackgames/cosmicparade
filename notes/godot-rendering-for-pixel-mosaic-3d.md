@@ -1,18 +1,23 @@
-# Godot 4.6 rendering and import defaults for a pixel-mosaic 3D look
+# Godot rendering and import defaults for a pixel-mosaic 3D look
 
 Research asset for [Research: Godot 4.6 renderers and import defaults for a
 pixel-mosaic 3D look](https://github.com/snackpackgames/cosmicparade/issues/4), a
 ticket on [Map: bootstrap the Godot
 project](https://github.com/snackpackgames/cosmicparade/issues/2).
 
-**This note gathers facts; it does not pick anything.** The choice belongs to [Pick the
-renderer and project-wide rendering
+**This note gathers facts; it does not pick a renderer.** That choice belongs to [Pick
+the renderer and project-wide rendering
 defaults](https://github.com/snackpackgames/cosmicparade/issues/5).
 
-Compiled 2026-10-28 against the **4.6** docs (`docs.godotengine.org/en/4.6/`), which is
-what CI pins via `chickensoft-games/setup-godot@v2`. Note that `/en/stable/` now serves
-**4.7**, so a stray stable link can report features 4.6 does not have — one of the
-findings below is exactly that.
+Compiled 2026-10-28. The engine pin is **`4.7.2-stable`**, settled in [Which Godot
+version the project pins](https://github.com/snackpackgames/cosmicparade/issues/13) —
+that decision came *out of* this research, because one answer here turned out to be
+version-dependent. Facts below are verified against the **4.7** docs, with the 4.6
+behaviour kept where the difference is the reason the pin moved.
+
+A note on sourcing: `docs.godotengine.org/en/stable/` currently serves 4.7, so a link
+that looks generic may be reporting the pinned version or not. Everything here uses an
+explicit `/en/4.7/` or `/en/4.6/` path.
 
 ## 1. The three rendering methods
 
@@ -51,9 +56,13 @@ Forward+ feature list is mostly about the *skybox and neon glow*, not about the 
 Compatibility additionally caps reflection probes at 2 per mesh and has no decals,
 which matters if domain influence ever reads as a projected decal on the ground.
 
+Note also that FSR of either generation requires Forward+ and silently falls back to
+bilinear elsewhere — but see §4: FSR is not the scaling mode this project wants anyway.
+
 ## 2. Texture filtering in 3D — the main finding
 
-**There is no project-wide 3D texture filter setting in Godot 4.6.**
+**There is no project-wide 3D texture filter setting. This is true in both 4.6 and
+4.7**, so the pin moving did not change it.
 
 - Image import exposes **no filter option at all**. Import options cover compression,
   mipmaps, normal maps and channel packing.
@@ -63,8 +72,8 @@ which matters if domain influence ever reads as a projected decal on the ground.
 - In **3D**, filtering is per material: `BaseMaterial3D.texture_filter`, default `3` =
   `TEXTURE_FILTER_LINEAR_WITH_MIPMAPS`. Custom shaders set it with hints on the
   `sampler2D` uniform.
-- `Viewport` has no 3D default-filter property either; its only such property is
-  `canvas_item_default_texture_filter`.
+- `Viewport` has no 3D default-filter property in either version; its only such
+  property is `canvas_item_default_texture_filter`.
 
 `BaseMaterial3D.TextureFilter` values:
 
@@ -90,6 +99,8 @@ line.
 
 ## 3. Mipmaps and anisotropy
 
+Keys and defaults are identical in 4.6 and 4.7.
+
 - `rendering/textures/default_filters/use_nearest_mipmap_filter` (bool, default
   `false`): when true, the `_WITH_MIPMAPS` modes pick the **nearest** mipmap instead of
   blending two. Read only at project start.
@@ -105,35 +116,37 @@ line.
 - Import-side: the docs recommend **enabling mipmaps for 3D** generally, and give no
   pixel-art-specific mipmap advice.
 
-## 4. Low-resolution 3D viewport upscaled — not viable the obvious way in 4.6
+## 4. Low-resolution 3D viewport upscaled — viable on 4.7, and the reason for the pin
 
-This was the most promising route to a *consistent tessera size on screen*, and 4.6
-cannot do it crisply through the built-in path.
+This is the most promising route to a *consistent tessera size on screen*, and whether
+it is cheap depends entirely on the engine version. It is why the pin moved.
 
-`Viewport.Scaling3DMode` in **4.6** has exactly: `BILINEAR` (0, default), `FSR` (1),
-`FSR2` (2), `METALFX_SPATIAL` (3), `METALFX_TEMPORAL` (4). **There is no
-nearest-neighbour mode.** `rendering/scaling_3d/mode` defaults to `0` and
-`rendering/scaling_3d/scale` to `1.0`; FSR of either generation requires Forward+ and
-falls back to bilinear otherwise, and MetalFX temporal requires the Metal driver, so
-macOS/iOS only.
+**On 4.7 (pinned):** `Viewport.Scaling3DMode` is `BILINEAR` (0, default), `FSR` (1),
+`FSR2` (2), `METALFX_SPATIAL` (3), `METALFX_TEMPORAL` (4), **`NEAREST` (5)**. The
+nearest mode:
 
-A nearest-neighbour 3D scaling mode **does** appear in the `latest`/`stable` (4.7)
-`RenderingServer` docs, described as crisper than bilinear at no extra cost with
-recommended scales like 0.5 or 0.25. On 4.6 it is simply absent, so:
+- uses nearest-neighbour filtering on the 3D buffer and **"looks crisper than"**
+  bilinear
+- has **no additional rendering cost**
+- is driven by `scaling_3d_scale`; **values above 1.0 are unsupported** and fall back to
+  bilinear downsampling, and 1.0 disables scaling
+- wants **integer-divisor scales — 0.5, 0.3333, 0.25, 0.2** — to avoid uneven pixel
+  scaling
 
-- Scaling below 1.0 on 4.6 means a **bilinear** upscale — blur, which is the one thing
-  a tessera grid cannot survive.
-- The 4.6-compatible way to get a crisp low-res 3D image is the manual one: render the
-  3D world into a `SubViewport` and display it through a CanvasItem (`TextureRect` /
-  `Sprite2D`) whose texture filter is nearest — at which point
-  `rendering/textures/canvas_textures/default_texture_filter` *does* apply, because the
-  display node is 2D.
-- Resolution scaling is 3D-only either way: it never affects 2D or UI, and the docs
-  point at the viewport stretch mode for the 2D equivalent.
+So pinning tessera size on screen is two settings: `rendering/scaling_3d/mode` = 5 and
+`rendering/scaling_3d/scale` = an integer divisor. 4.7 also exposes `mode.ios` and
+`mode.macos` platform overrides.
 
-Both routes have consequences well beyond `project.godot` — a SubViewport pipeline
-changes how UI composites, how mouse picking maps into the 3D world, and what the
-camera does on window resize.
+**On 4.6 (not pinned, kept for the record):** the enum stops at `METALFX_TEMPORAL` (4)
+— there is **no nearest mode**. Scaling below 1.0 therefore means a bilinear upscale,
+i.e. blur, which is the one thing a tessera grid cannot survive. The only crisp route
+on 4.6 was manual: render the 3D world into a `SubViewport` and display it through a
+nearest-filtered CanvasItem (`TextureRect` / `Sprite2D`), which drags in UI compositing
+and mouse-picking consequences well beyond `project.godot`. Avoiding that is what the
+4.7 pin bought.
+
+Either way, resolution scaling is **3D-only**: it never affects 2D or UI, and the docs
+point at the viewport stretch mode for the 2D equivalent.
 
 ## 5. Antialiasing
 
@@ -156,7 +169,12 @@ Keys: `rendering/anti_aliasing/quality/msaa_3d` (int, `0`),
 `msaa_2d` (int, `0`, Forward+/Mobile only — the docs warn against changing this one by
 mistake), `screen_space_aa` (int, `0`, Forward+/Mobile only, FXAA or SMAA),
 `use_taa` (bool, `false`, Forward+ only), `use_debanding` (bool, `false`). All are read
-**only at project start**; each has a runtime `Viewport` equivalent.
+**only at project start**; each has a runtime `Viewport` equivalent. These five were
+verified on the 4.6 reference; the rest of the table in §7 was re-verified on 4.7.
+
+Note the interaction with §4: SSAA via `scale` > 1.0 is **not available in nearest
+mode**, which rejects scales above 1.0 outright. Supersampling and crisp tesserae are
+mutually exclusive choices here.
 
 ## 6. Import settings for pixel-mosaic textures
 
@@ -179,6 +197,9 @@ mistake), `screen_space_aa` (int, `0`, Forward+/Mobile only, FXAA or SMAA),
 
 ## 7. Exact keys and defaults, as verified
 
+Verified on the **4.7** `ProjectSettings` reference except where noted; every key in
+this table that was also checked on 4.6 had an identical type and default.
+
 | Key | Type | Default | Scope / notes |
 |---|---|---|---|
 | `rendering/renderer/rendering_method` | String | `"forward_plus"` | `.mobile` → `"mobile"`, `.web` → `"gl_compatibility"` |
@@ -186,18 +207,18 @@ mistake), `screen_space_aa` (int, `0`, Forward+/Mobile only, FXAA or SMAA),
 | `rendering/textures/default_filters/use_nearest_mipmap_filter` | bool | `false` | start-only |
 | `rendering/textures/default_filters/anisotropic_filtering_level` | int | `2` | 2D+3D, anisotropic modes only; start-only |
 | `rendering/textures/default_filters/texture_mipmap_bias` | float | `0.0` | negative = sharper |
-| `rendering/anti_aliasing/quality/msaa_3d` | int | `0` | start-only |
-| `rendering/anti_aliasing/quality/msaa_2d` | int | `0` | Forward+/Mobile only; start-only |
-| `rendering/anti_aliasing/quality/screen_space_aa` | int | `0` | Forward+/Mobile only; start-only |
-| `rendering/anti_aliasing/quality/use_taa` | bool | `false` | Forward+ only; start-only |
-| `rendering/anti_aliasing/quality/use_debanding` | bool | `false` | start-only |
-| `rendering/scaling_3d/mode` | int | `0` (bilinear) | 3D only; FSR needs Forward+ |
-| `rendering/scaling_3d/scale` | float | `1.0` | 3D only; `> 1.0` is bilinear-only |
+| `rendering/anti_aliasing/quality/msaa_3d` | int | `0` | start-only *(4.6-verified)* |
+| `rendering/anti_aliasing/quality/msaa_2d` | int | `0` | Forward+/Mobile only; start-only *(4.6-verified)* |
+| `rendering/anti_aliasing/quality/screen_space_aa` | int | `0` | Forward+/Mobile only; start-only *(4.6-verified)* |
+| `rendering/anti_aliasing/quality/use_taa` | bool | `false` | Forward+ only; start-only *(4.6-verified)* |
+| `rendering/anti_aliasing/quality/use_debanding` | bool | `false` | start-only *(4.6-verified)* |
+| `rendering/scaling_3d/mode` | int | `0` (bilinear) | 3D only; **`5` = nearest, 4.7+**; `.ios` / `.macos` overrides exist |
+| `rendering/scaling_3d/scale` | float | `1.0` | 3D only; `> 1.0` bilinear-only, rejected by nearest mode |
 | `rendering/scaling_3d/fsr_sharpness` | float | `0.2` | FSR only; `0.0` sharpest, max `2.0` |
-| `rendering/environment/defaults/default_environment` | String | `""` | fallback env, loaded at scene load |
+| `rendering/environment/defaults/default_environment` | String | `""` | fallback env, loaded at scene load *(4.6-verified)* |
 
 `BaseMaterial3D.texture_filter` default: `3` (`LINEAR_WITH_MIPMAPS`). There is no
-project setting that changes it.
+project setting that changes it, in either version.
 
 ## 8. What the decision ticket still has to settle
 
@@ -205,27 +226,34 @@ Gathered, not decided:
 
 1. **Renderer.** Forward+ buys volumetric fog, SSR/SSIL and GI for the cosmic skybox
    and the neon; Mobile is lighter and keeps decals and MSAA; Compatibility is the
-   widest reach and loses decals and most of the atmosphere.
+   widest reach and loses decals and most of the atmosphere. Note that the nearest
+   scaling mode in §4 works on **all** renderers, so it does not force Forward+.
 2. **How nearest filtering is actually enforced in 3D**, given no setting exists —
    shared base material, shared shader, convention, or a test.
-3. **Whether tessera size is pinned on screen at all**, and if so whether that is worth
-   a SubViewport pipeline on 4.6 or is deferred until the engine pin moves to 4.7,
-   where a nearest 3D scaling mode exists.
+3. **Whether tessera size is pinned on screen at all**, and at what integer-divisor
+   scale. Cheap on the pinned 4.7.2, but it rules out SSAA and fixes an effective
+   render resolution.
 4. **MSAA level**, and confirmation that no screen-space AA is wanted.
 5. **Which import defaults the scaffold writes** — lossless compression and mipmaps at
    minimum — and whether Import Defaults is trusted or each asset carries its own
    `.import`.
 
+The engine version is no longer among these: it is `4.7.2-stable`.
+
 ## Sources
 
 - [Renderers](https://docs.godotengine.org/en/stable/tutorials/rendering/renderers.html)
-  (served as 4.7; feature table cross-checked against 4.6 class refs)
+  (served as 4.7, the pinned line)
+- [Viewport (4.7)](https://docs.godotengine.org/en/4.7/classes/class_viewport.html) —
+  `SCALING_3D_MODE_NEAREST`
+- [ProjectSettings (4.7)](https://docs.godotengine.org/en/4.7/classes/class_projectsettings.html)
+- [Viewport (4.6)](https://docs.godotengine.org/en/4.6/classes/class_viewport.html) —
+  the enum without a nearest mode
+- [ProjectSettings (4.6)](https://docs.godotengine.org/en/4.6/classes/class_projectsettings.html)
+- [BaseMaterial3D (4.6)](https://docs.godotengine.org/en/4.6/classes/class_basematerial3d.html)
 - [Importing images (4.6)](https://docs.godotengine.org/en/4.6/tutorials/assets_pipeline/importing_images.html)
 - [Import process (4.6)](https://docs.godotengine.org/en/4.6/tutorials/assets_pipeline/import_process.html)
-- [BaseMaterial3D (4.6)](https://docs.godotengine.org/en/4.6/classes/class_basematerial3d.html)
-- [Viewport (4.6)](https://docs.godotengine.org/en/4.6/classes/class_viewport.html)
-- [ProjectSettings (4.6)](https://docs.godotengine.org/en/4.6/classes/class_projectsettings.html)
 - [Resolution scaling (4.6)](https://docs.godotengine.org/en/4.6/tutorials/3d/resolution_scaling.html)
 - [3D antialiasing (4.6)](https://docs.godotengine.org/en/4.6/tutorials/3d/3d_antialiasing.html)
-- [RenderingServer (latest)](https://docs.godotengine.org/en/latest/classes/class_renderingserver.html)
-  — source for the 4.7-only nearest 3D scaling mode
+- [Godot releases](https://github.com/godotengine/godot/releases) — `4.7.2-stable`,
+  published 2026-08-18, is the latest 4.7
