@@ -10,7 +10,7 @@ on:
 
 env:
   EXPORT_NAME: cosmicparade
-  GODOT_VERSION: 4.6.1
+  GODOT_VERSION: 4.7.2
 
 permissions:
   contents: read
@@ -72,7 +72,7 @@ jobs:
       if: steps.probe.outputs.runnable == 'true'
       uses: chickensoft-games/setup-godot@v2
       with:
-        version: 4.6.1
+        version: 4.7.2
         use-dotnet: false
 
     - name: Import assets

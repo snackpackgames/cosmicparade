@@ -1,0 +1,55 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Cosmic Parade"
+config/features=PackedStringArray("4.7", "Forward Plus")
+config/icon="res://icon.svg"
+run/main_scene="res://ui/title/title.tscn"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[importer_defaults]
+
+texture={
+"compress/mode": 0,
+"detect_3d/compress_to": 0,
+"mipmaps/generate": true
+}
+
+[layer_names]
+
+3d_physics/layer_1="realm_space"
+3d_physics/layer_2="furniture"
+3d_physics/layer_3="fixture"
+3d_physics/layer_9="biome_ground"
+3d_physics/layer_10="terrain_feature"
+3d_physics/layer_17="entity"
+3d_physics/layer_25="parade_space"
+3d_physics/layer_26="tile"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+scaling_3d/mode=5
+scaling_3d/scale=1.0
+anti_aliasing/quality/msaa_3d=2
+anti_aliasing/quality/screen_space_aa=0
+anti_aliasing/quality/use_taa=false

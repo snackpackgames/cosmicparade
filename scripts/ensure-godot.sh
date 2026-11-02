@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-GODOT_VERSION="4.6.1"
+GODOT_VERSION="4.7.2"
 GODOT_TAG="${GODOT_VERSION}-stable"
 GODOT_ASSET="Godot_v${GODOT_TAG}_linux.x86_64.zip"
 GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_TAG}/${GODOT_ASSET}"
