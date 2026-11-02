@@ -9,7 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 
 if [[ -z "$1" ]]; then
-  "$GODOT" -v --headless -s addons/gut/gut_cmdln.gd -gdir=res://test/unit/ -ginclude_subdirs -gexit --path "$PROJECT_ROOT"
+  # Writes the JUnit report CI reads, so scripts/check_test_count.sh can be run
+  # locally against the same artifact. .gitignore already covers test_results.*.
+  "$GODOT" -v --headless -s addons/gut/gut_cmdln.gd -gdir=res://test/unit/ -ginclude_subdirs -gjunit_xml_file="$PROJECT_ROOT/test_results.xml" -gexit --path "$PROJECT_ROOT"
 elif [[ "$1" == *.gd ]]; then
   # -gtest= only adds the file to whatever -gdir already collected, so -gdir=
   # clears .gutconfig.json's dirs (res://test/unit/) to run just this file.
