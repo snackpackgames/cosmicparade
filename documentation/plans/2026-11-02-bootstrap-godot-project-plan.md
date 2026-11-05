@@ -351,10 +351,16 @@ secret, both out of scope on the map.
 - `documentation/agents/scheduled-routine-prompt.md` — "this is a Godot 4.6 / GDScript
   project".
 
-**The routine prompt needs a manual step this agent cannot perform.** That file is
-authoritative but not live: the running routine is configured in Claude Code's
-`/schedule`, which nothing in the repo can reach. Say so in the PR body so the maintainer
-re-pastes it; without that, the file and the running routine drift.
+**The routine prompt is authoritative but not live.** The running routine is configured
+outside the repo, so nothing in a worktree can read or write it. That much still holds —
+but it does not follow that a human must re-paste the prompt by hand: a Claude Code
+session can reach the routine, and the live prompt **was synced to `4.7.2` out of band on
+2026-11-02**, before this task ran. The file is therefore the stale copy and the routine
+is already correct, so this edit closes the gap rather than opening one.
+
+Note the file-versus-routine split in the PR body, and ask the maintainer for a re-sync
+**only** if this task changes something beyond the engine version. Do not ask them to
+re-paste a prompt that already matches.
 
 ### Task 3.5 — Verify
 
