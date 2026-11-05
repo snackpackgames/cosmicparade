@@ -99,7 +99,7 @@ Lua 5.3 stdlib is available (`string`, `table`, `math`) with some OS restriction
 
 ## Project context
 
-Cosmic Parade is a **3D** Godot 4.6 project, so Aseprite output here is usually a
+Cosmic Parade is a **3D** Godot 4.7.2 project, so Aseprite output here is usually a
 *texture*, not a sprite sheet: albedo/emission maps for `StandardMaterial3D`, UI
 and HUD art, decals, billboarded effects, and flipbook strips driven by a shader.
 

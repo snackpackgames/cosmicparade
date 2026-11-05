@@ -9,7 +9,7 @@ Cloud sessions reach GitHub through a proxy that refuses GraphQL, and `gh issue 
 ## The prompt
 
 ```text
-Read CLAUDE.md at the repo root first for full project context (this is a Godot 4.6 / GDScript project called Cosmic Parade). Issues are tracked in GitHub Issues on this repo (snackpackgames/cosmicparade) via the gh CLI — see documentation/agents/issue-tracker.md and documentation/agents/triage-labels.md for the triage label conventions (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix).
+Read CLAUDE.md at the repo root first for full project context (this is a Godot 4.7.2 / GDScript project called Cosmic Parade). Issues are tracked in GitHub Issues on this repo (snackpackgames/cosmicparade) via the gh CLI — see documentation/agents/issue-tracker.md and documentation/agents/triage-labels.md for the triage label conventions (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix).
 
 You are running in a cloud session, which cannot use GitHub's GraphQL API. Use `gh api` REST calls, not `gh issue`/`gh pr edit`/`gh project` porcelain, for every tracker read and write below. `gh pr create` is not GraphQL-backed and is fine to use.
 
