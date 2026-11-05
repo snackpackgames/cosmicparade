@@ -42,8 +42,6 @@ Every PR gets the following metadata when it is opened. AI agents must apply all
 | **Milestone** | The linked issue's milestone. If the issue has none and is a Wayfinder ticket, use its parent map's milestone. If neither has one, choose the milestone whose description covers the system changed |
 | **Project** | `Cosmic Parade v1.0`, with **Status** set to `In Progress` |
 
-> **Setup still pending.** This repo currently has only GitHub's default labels, no milestones, and no project board. Until the `Cosmic Parade v1.0` board and the label/milestone set exist, apply whatever subset is available and say which fields were skipped. See [Repo setup](#repo-setup-still-pending).
-
 Apply it with `gh` (`gh pr create` accepts the same `--label` / `--assignee` / `--milestone` flags):
 
 ```bash
@@ -117,12 +115,12 @@ file automatically.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `GODOT` | *(required)* | Path to Godot 4.6+ executable |
+| `GODOT` | *(required)* | Path to Godot 4.7+ executable |
 
 Example `.env`:
 
 ```
-GODOT="/path/to/Godot_v4.6.1-stable_linux.x86_64"
+GODOT="/path/to/Godot_v4.7.2-stable_linux.x86_64"
 ```
 
 In a disposable sandbox with no interactive user (e.g. a cloud agent run), run
@@ -202,23 +200,16 @@ rm .git/hooks/pre-push
 ## Tests
 
 - Tests live in `test/unit/` and mirror the source tree
-  - e.g., `combat/hitbox.gd` → `test/unit/combat/test_hitbox.gd`
+  - e.g., `tiles/tile_slot.gd` → `test/unit/tiles/test_tile_slot.gd`
 - Test classes extend `GutTest`
 - Run tests locally before pushing: `bash scripts/test.sh` (see `CLAUDE.md` for setup)
 - A test script that fails to parse is caught by `test/hooks/pre_run_hook.gd` and reported as a failure of `test_all_test_scripts_load`, rather than being silently dropped by GUT
 
-## Repo setup (still pending)
+## Repo setup
 
-This repo was scaffolded from the fiber project's configuration. The following still need to be created before every convention above works end to end:
+The Godot project (`project.godot`, `ui/title/title.tscn` as the main scene, Godot's default `icon.svg`), the GUT addon under `addons/gut/`, the type, area, triage and wayfinder labels, the eight milestones and the `Cosmic Parade v1.0` project board (with its `Status` field) all exist. Two items remain:
 
-- [ ] The Godot project itself (`project.godot`, `main.tscn`, `icon.svg`)
-- [ ] The GUT addon under `addons/gut/` (CI and `scripts/test.sh` both invoke `res://addons/gut/gut_cmdln.gd`)
 - [ ] `export_presets.cfg` and release packaging, if desktop builds are wanted
-- [ ] Type and area labels beyond GitHub's defaults
-- [ ] Milestones
-- [ ] The `Cosmic Parade v1.0` GitHub Projects (v2) board with a `Status` single-select field (`Backlog`, `Refining`, `Refined`, `Blocked`, `Todo`, `In Progress`, `Done`) — the `/groom-backlog` skill requires it
-- [ ] Triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` (`wontfix` already exists) — see `documentation/agents/triage-labels.md`
-- [ ] Wayfinder labels: `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, `wayfinder:task`
 - [ ] The `CLAUDE_CODE_OAUTH_TOKEN` repo secret, for the `@claude` GitHub Actions workflow
 
 ## AI Tooling (Claude Code)

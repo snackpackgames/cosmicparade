@@ -7,9 +7,9 @@ floating rock, a few sticks of furniture, some fruit, and four tiles. The cosmic
 expanse is rotting from neglect. You are going to fix it by gardening, befriending
 spirits, and throwing the most compelling parade anyone has ever seen.
 
-> **Status:** design document. There is no Godot project in this repo yet — see
-> `CLAUDE.md → Status` and `CONTRIBUTING.md → Repo setup`. Nothing below is
-> implemented.
+> **Status:** design document. The Godot project is bootstrapped but no gameplay
+> system exists — see `CLAUDE.md → Status` and `CONTRIBUTING.md → Repo setup`.
+> Nothing below is implemented.
 
 ## Genre
 

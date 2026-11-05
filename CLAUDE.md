@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cosmic Parade is a **3D** game built with **Godot 4.6** using **GDScript**.
+Cosmic Parade is a **3D** game built with **Godot 4.7.2-stable** using **GDScript**.
 
 **Genre:** mosaic deckbuilding · pet management · cozy sandbox room decorator ·
 crafting. Two halves that feed each other — a cozy realm-tending half (decorate, grow,
@@ -31,14 +31,13 @@ grows up out of it (see `documentation/adr/0001`).
 pageant rules, systems, settled decisions and open questions. Read it before design
 work. `documentation/adr/` records why each settled decision went the way it did.
 
-## Status: scaffold only
+## Status: bootstrapped, no gameplay yet
 
-This repo currently holds project configuration ported from the `fiber` project —
-tooling scripts, CI, lint/format config, Claude Code skills and conventions — plus the
-design document (`README.md`) and its decision records (`documentation/adr/`), and
-**no Godot project yet**. `CONTRIBUTING.md → Repo setup` lists what is still missing
-(`project.godot`, `addons/gut/`, labels, milestones, project board). Commands below
-that invoke Godot or GUT will not work until those exist.
+The Godot project exists and boots to a stub Title screen (`ui/title/title.tscn`).
+`project.godot`, the vendored GUT addon, the shared surface shader and a small passing
+test suite are in place; the labels, milestones and project board exist. No gameplay
+system is built. `CONTRIBUTING.md → Repo setup` lists what is genuinely still missing
+(`export_presets.cfg` and the `CLAUDE_CODE_OAUTH_TOKEN` secret).
 
 ## Running and Testing
 
@@ -53,12 +52,12 @@ that invoke Godot or GUT will not work until those exist.
   bash scripts/import.sh
   ```
 - **Unloadable test scripts fail the run**: GUT on its own silently drops a test file that fails to parse (or preloads something that does). `test/hooks/pre_run_hook.gd` (configured in `.gutconfig.json`) catches these and reports each one as a failure of `test_all_test_scripts_load` — look for the file's `Parse Error` earlier in the log
-- **Tests use the [GUT](https://github.com/bitwes/Gut) framework**. Tests live in `test/unit/` and extend `GutTest`. Test files mirror the source tree — e.g., `combat/hitbox.gd` → `test/unit/combat/test_hitbox.gd`
-- **CI**: GitHub Actions runs gdlint then GUT tests on PRs/pushes to `main` using Godot 4.6.1 via `chickensoft-games/setup-godot@v2`
+- **Tests use the [GUT](https://github.com/bitwes/Gut) framework**. Tests live in `test/unit/` and extend `GutTest`. Test files mirror the source tree — e.g., `tiles/tile_slot.gd` → `test/unit/tiles/test_tile_slot.gd`
+- **CI**: GitHub Actions runs gdlint then GUT tests on PRs/pushes to `main` using Godot 4.7.2 via `chickensoft-games/setup-godot@v2`
 
 ### Local Setup
 
-The project uses a `.env` file (gitignored) for machine-specific configuration. Copy `.env.example` to `.env` and set the `GODOT` variable to your Godot 4.6+ executable path. The wrapper scripts in `scripts/` read this file automatically.
+The project uses a `.env` file (gitignored) for machine-specific configuration. Copy `.env.example` to `.env` and set the `GODOT` variable to your Godot 4.7+ executable path. The wrapper scripts in `scripts/` read this file automatically.
 
 **If `.env` is missing or `GODOT` is not set**, ask the user for their Godot executable path and create the `.env` file:
 ```
@@ -99,27 +98,46 @@ See `CONTRIBUTING.md → AI Tooling` for full setup including optional Godot MCP
 
 ## Architecture
 
-**Nothing is built yet** — there is no `project.godot`, no entry point and no
-directory layout to document. Do not infer one from this section; it records only what
-the design already commits to.
+The layout follows one vocabulary: the `area:` labels (`realm`, `parade`, `tiles`,
+`entities`, `terrain`, `scoring`, `save`, `ui`, `audio`, `multiplayer`). A **system
+directory** is named after a label and holds gameplay code; the same name runs across
+`test/unit/<name>/`, `data/<name>/` and `assets/<name>/`. **Structural directories** are
+a closed list — adding one is a documented decision, not a PR-time judgement call.
+Directories are created only when they hold real committed files; no `.gitkeep`
+placeholders.
 
-The design's scene list (`README.md → Scenes`) is what the layout will have to carry:
-Title → Character Creation → Realm (shrines, furniture, Altar with Summon and Fire,
-Shipyard Mooring) → Cosmic Parade (pageants on a parade ground). The Realm and the
-Cosmic Parade are the two heavyweight scenes and the two halves of the game.
+Screens live under `ui/` (`ui/title/`, `ui/character_creation/`); `realm/realm.tscn` and
+`parade/parade.tscn` head their own system directories. `.tscn` files pair with their
+`.gd` in the same directory.
 
-Two structural decisions already constrain how systems get written:
+| Structural directory | Holds | `test/unit/` mirror |
+|---|---|---|
+| `addons/` | Third-party plugins (GUT). Excluded from lint | No |
+| `assets/` | Imported assets, mirroring system names; `.import` sidecars committed | No |
+| `common/` | Cross-cutting source (scripts and shaders) used by more than one system and owned by none | Yes |
+| `data/` | Authored `.tres`, as `data/<system>/<type>/<instance>.tres` | No |
+| `documentation/` | `adr/`, `agents/`, `plans/` | No |
+| `notes/` | Working material; explicitly not authoritative | No |
+| `scripts/` | Bash tooling — **not GDScript** | No |
+| `test/` | `test/unit/` mirrors, `test/hooks/` | n/a |
 
-- **Data in Resources, logic in scripts** (existing convention, below) is load-bearing
-  for three systems in particular. The fusion lookup table (`adr/0004`), tile slot
-  assembly (`adr/0006`) and per-entity glaze lists (`adr/0007`) are all `.tres` data
-  with no per-instance authoring.
-- **Terrain generation is two systems, not one** — biome fill across overlap interiors,
-  and feature spawning on boundaries (`adr/0008`).
+`.godot/` is engine-owned and gitignored. `test/unit/` mirrors system directories and
+`common/` only. `.gdshader` files are not linted (`scripts/lint.sh` finds `*.gd` only).
 
-Fiber kept architecture as a table of system docs under `documentation/` plus a
-`documentation/ARCHITECTURE.md` for directory and resource conventions — worth
-repeating here once there is a second system to cross-reference.
+**Autoloads.** None ships. An autoload must outlive a scene change *and* be needed by
+more than one system, and it arrives with its first real signal or field, never empty.
+When warranted, cross-system events go on one project-wide `SignalBus` — not one bus per
+area. Events internal to a system stay node-to-node and never appear on the bus.
+
+**`GameData`.** Fusion table (`adr/0004`), tile slots (`adr/0006`) and glaze lists
+(`adr/0007`) are all `.tres` data with no per-instance authoring, built on the
+`GameData` base.
+
+**Terrain generation is two systems, not one** — biome fill across overlap interiors,
+and feature spawning on boundaries (`adr/0008`).
+
+The reasoning is in `documentation/adr/0013-repo-layout-follows-area-labels.md`.
+`documentation/ARCHITECTURE.md` waits until a second system needs cross-referencing.
 
 `documentation/plans/` holds implementation plan files for features in progress. When resuming work on a feature, check here for the step-by-step plan before touching code.
 
@@ -127,24 +145,32 @@ repeating here once there is a second system to cross-reference.
 
 ### 3D Physics Layers
 
-> **TODO: no layers are assigned yet** — there is no `project.godot` to assign them
-> in. Assign and document layer names there under `[layer_names]`
-> (`3d_physics/layer_N`) before adding the first collision body, then record the
-> assignments as a table here. Pick the layer/mask combination that matches a new
-> body's role rather than introducing new bits ad hoc.
+Names are assigned in `project.godot` under `[layer_names]`. Bits are numbered in blocks
+of eight aligned to the `area:` labels, so each block is one inspector row. Unassigned
+bits show as `Layer N` in the inspector, which is the intended signal that they are
+unclaimed.
 
-The design implies these distinct collision roles, listed to inform that first
-assignment — **this is not a layer table and nothing is reserved yet**:
+| # | Name | `area:` | Set on | Masks (starting point) |
+|---|---|---|---|---|
+| 1 | `realm_space` | realm | Each hex space of the realm board | — (passive target) |
+| 2 | `furniture` | realm | Furniture volumes (`adr/0001`) | `realm_space`, `furniture`, `fixture` |
+| 3 | `fixture` | realm | Shrines and the Altar | `realm_space`, `fixture` |
+| 9 | `biome_ground` | terrain | Walkable fused-biome ground, overlap interiors (`adr/0008`) | — (passive target) |
+| 10 | `terrain_feature` | terrain | Blocking features spawned on boundaries (`adr/0008`) | — (passive target) |
+| 17 | `entity` | entities | Roaming entity avatars | `biome_ground`, `terrain_feature` |
+| 25 | `parade_space` | parade | Each space of a parade ground | — (passive target) |
+| 26 | `tile` | tiles | Tiles placed on a parade ground (`adr/0002`) | `parade_space` |
 
-- Board spaces that accept a tile placement (realm hex spaces; parade ground spaces)
-- Placed tiles and furniture as volumes (`adr/0001`)
-- Domain influence zones, which overlap on purpose and need overlap queries
-- Walkable biome ground, versus blocking terrain features (`adr/0008`)
-- Roaming entities, and the player's pointer or camera picking against all of the above
+Pick the layer/mask combination that matches a new body's role. If none fits, claim the
+next bit **inside that role's block** and add a row here in the same change.
 
-Note that domain influence zones exist to overlap — several at once, by design — so
-whatever carries them must tolerate many simultaneous overlaps rather than treating
-one as a collision to resolve.
+**Domain influence gets no layer, deliberately.** Influence zones are sets of hex
+coordinates per domain — grid data, not `Area3D` volumes — because `adr/0008` needs
+overlap interior and boundary as set and adjacency operations. Do not fill the gap with
+an ad-hoc bit; the "many simultaneous overlaps" constraint applies to the grid data
+structure, not to physics. Pointer and camera picking also get no bit: build the query's
+`collision_mask` per context (realm: `realm_space | furniture | fixture | entity`;
+parade ground: `parade_space | tile`).
 
 Godot gives 3D physics its own 32 layers, independent of the 2D set. `Area3D`,
 `StaticBody3D`, `CharacterBody3D` and `RigidBody3D` all read `collision_layer`
@@ -161,7 +187,8 @@ number means nothing on its own until it is named in `project.godot`.
 - `@export` for editor-tunable properties, `@onready` for node references
 - `%NodeName` syntax for unique node access in scenes
 - Scene files (`.tscn`) are paired with scripts (`.gd`) in the same directory or a `/scenes/` subdirectory
-- Data definitions use Godot Resources (`.tres`), logic lives in scripts
+- Data definitions use Godot Resources (`.tres`), logic lives in scripts. Authored resources extend the `GameData` base (`common/game_data.gd`, arriving with the first `.tres`); the Resource script stays with its system and instances live at `data/<system>/<type>/<instance>.tres`
+- Every script declares a `class_name`, with one documented exception: **an autoload script declares no `class_name`**, since it would collide with the singleton name
 - Use full `snake_case` words for variable and parameter names — avoid cryptic abbreviations like `rr`/`rv`/`sa`/`ea`/`inst`/`def`/`rs`. Prefer `roll_range`, `rolled_value`, `stat_affix`, `effect_affix`, `instance`, `definition`, `rolled_stat`. Short loop counters (`i`, `j`) and established project-wide terms (e.g. `mod` for `StatModifier`) are fine.
 
 ## Claude Code Configuration
@@ -254,7 +281,7 @@ Uses the canonical label names as-is (`needs-triage`, `needs-info`, `ready-for-a
 
 ### AFK implementation pipeline
 
-Loose idea → `/wayfinder-chart` (map with a declared destination type) → `/wayfinder <map>` (one decision per session) → `/wayfinder-handoff <map>` (plan merged to `main`, then labelled issues) → a scheduled cloud routine implements them. See `documentation/agents/afk-pipeline.md`; the routine's prompt is version-controlled at `documentation/agents/scheduled-routine-prompt.md` and must be pasted into `/schedule` by hand after any change.
+Loose idea → `/wayfinder-chart` (map with a declared destination type) → `/wayfinder <map>` (one decision per session) → `/wayfinder-handoff <map>` (plan merged to `main`, then labelled issues) → a scheduled cloud routine implements them. See `documentation/agents/afk-pipeline.md`; the routine's prompt is version-controlled at `documentation/agents/scheduled-routine-prompt.md` and is authoritative; the running routine is configured outside the repo.
 
 `wayfinder` itself is vendored from `mattpocock/skills` — never edit `.claude/skills/wayfinder/`. The two pipeline skills (`wayfinder-chart`, `wayfinder-handoff`) and `groom-backlog` are project-owned and live only in `.claude/skills/`, not `.agents/skills/`.
 
