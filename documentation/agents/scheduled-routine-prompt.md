@@ -80,10 +80,9 @@ Your task:
    (e.g. "Closes #N"), with a summary and a test plan:
      gh api -X POST repos/snackpackgames/cosmicparade/pulls \
        -f title="<title>" -f head="<branch>" -f base=main -F body=@<file>
-   Apply the full PR metadata
-   from CONTRIBUTING.md → Pull Requests → PR metadata. A cloud session cannot set
-   the project board or Status — do everything else, then say which items still
-   need adding to the board so a human can finish it.
+   Apply the full PR metadata from CONTRIBUTING.md → Pull Requests → PR metadata.
+   A cloud session cannot set the project board or Status — do everything else,
+   then say which items still need adding to the board so a human can finish it.
 
 If no issue is safely unblocked and implementable in one session, do not force it.
 Leave a comment on the most promising issue explaining what additional info or
