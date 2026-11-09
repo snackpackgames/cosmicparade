@@ -26,6 +26,9 @@ mono_crash.*.json
 test_output.log
 logs/
 
+# Prototype render output (regenerable; see test/prototypes/README.md)
+test/prototypes/*/out/
+
 # Local environment
 .env
 
