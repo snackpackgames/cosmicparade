@@ -204,6 +204,7 @@ rm .git/hooks/pre-push
 - Test classes extend `GutTest`
 - Run tests locally before pushing: `bash scripts/test.sh` (see `CLAUDE.md` for setup)
 - A test script that fails to parse is caught by `test/hooks/pre_run_hook.gd` and reported as a failure of `test_all_test_scripts_load`, rather than being silently dropped by GUT
+- `test/prototypes/` is not part of the suite — it holds throwaway Godot projects kept as the evidence behind a design decision. They are linted but never run by `scripts/test.sh`, and nothing in them is authoritative. See `test/prototypes/README.md`
 
 ## Repo setup
 

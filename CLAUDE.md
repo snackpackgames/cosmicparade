@@ -119,10 +119,16 @@ Screens live under `ui/` (`ui/title/`, `ui/character_creation/`); `realm/realm.t
 | `documentation/` | `adr/`, `agents/`, `plans/` | No |
 | `notes/` | Working material; explicitly not authoritative | No |
 | `scripts/` | Bash tooling — **not GDScript** | No |
-| `test/` | `test/unit/` mirrors, `test/hooks/` | n/a |
+| `test/` | `test/unit/` mirrors, `test/hooks/`, `test/prototypes/` | n/a |
 
 `.godot/` is engine-owned and gitignored. `test/unit/` mirrors system directories and
 `common/` only. `.gdshader` files are not linted (`scripts/lint.sh` finds `*.gd` only).
+
+`test/prototypes/` holds throwaway Godot projects kept as the evidence behind a design
+decision — not authoritative and never shipped, the same standing as `notes/`. Each is
+self-contained with its own `project.godot`, so the main project cannot import it and
+cannot break it; files it needs from the game are copied in as a snapshot. The GDScript
+is still linted. See `test/prototypes/README.md`.
 
 **Autoloads.** None ships. An autoload must outlive a scene change *and* be needed by
 more than one system, and it arrives with its first real signal or field, never empty.
