@@ -10,6 +10,14 @@ Cloud sessions reach GitHub through a proxy that refuses GraphQL, and `gh issue 
 
 **A cloud session has no GitHub login of its own.** It pushes and opens PRs through the repo's Claude GitHub App installation, which GitHub attributes to the installing user — PRs come out authored by that account, and commits by `Claude <noreply@anthropic.com>`. So there is no agent identity to assign an issue to, which is why step 3 below resolves a login instead of naming one. Relatedly, **the App must list this repo** under its installation; while it did not, every run implemented its issue and then lost the work to a 403 on `git push`, reporting success each time.
 
+**The closing fallback used to comment whenever nothing was implementable**, which
+assumed a tracker holding implementable work. Once only wayfinder maps and decision
+tickets were open, the routine commented on one every fire — three a day, under the
+maintainer's own account, since it resolves its login from `gh api user`. Worse, the run
+of 2026-11-08 15:55 ET asked for a prototype and a decision that had closed at 19:38Z
+and 14:13Z, because it reasoned from issue prose rather than live state. The fallback is
+now scoped to `ready-for-agent` issues, and silent otherwise.
+
 ## The prompt
 
 ```text
@@ -22,7 +30,11 @@ Your task:
 1. List candidates:
      gh api "repos/snackpackgames/cosmicparade/issues?state=open&labels=ready-for-agent&per_page=100" \
        --jq '.[] | select(.pull_request == null) | {number, title}'
-   If that yields nothing, fall back to all open issues, but prefer labeled-ready ones.
+   If that yields nothing, fall back to all open issues, but prefer labeled-ready ones,
+   and skip any issue carrying a `wayfinder:` label. Those are planning artifacts — a
+   map, or a decision ticket resolved by a human in a `/wayfinder` session — and are
+   not implementable as they stand. If every open issue is one of them, there is
+   nothing here for you: stop, and see the closing paragraph.
 
 2. Walk that candidate list oldest-first and take the FIRST issue that passes both
    checks below. Stop walking as soon as one passes — do not pre-screen the whole
@@ -84,8 +96,22 @@ Your task:
    A cloud session cannot set the project board or Status — do everything else,
    then say which items still need adding to the board so a human can finish it.
 
-If no issue is safely unblocked and implementable in one session, do not force it.
-Leave a comment on the most promising issue explaining what additional info or
-decisions are needed, and do not open a PR:
-  gh api repos/snackpackgames/cosmicparade/issues/<n>/comments -f body='...'
+If no issue is safely unblocked and implementable in one session, do not force it and
+do not open a PR. Whether you also leave a comment depends on why you stopped.
+
+  - **An issue carried `ready-for-agent` and you could not work it.** Comment on it —
+    the most promising, if several — explaining what is missing:
+      gh api repos/snackpackgames/cosmicparade/issues/<n>/comments -f body='...'
+    Assert only prerequisites you verified in this session. A dependency is open only
+    if the step 2a query says so; another issue is unresolved only if its state is
+    open. Never infer either from issue prose, which goes stale the moment a ticket
+    closes — a comment asking for work that finished an hour earlier is worse than no
+    comment, because it is written under a human's own account. Read the issue's
+    existing comments first: if you already left a fallback comment there and nothing
+    has changed since, add nothing.
+
+  - **No issue carried `ready-for-agent`.** Write nothing to the tracker: no comment,
+    no label, no assignment. Say so in your final message instead. An empty queue is a
+    normal outcome, not a problem to escalate, and commenting on planning work only
+    annotates a human's open questions under their own name.
 ```
