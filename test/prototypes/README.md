@@ -23,8 +23,15 @@ for instance — are **copied in**, deliberately, as a snapshot.
 `.gdignore` in this directory keeps the main project from scanning any of it. Godot
 already skips a folder holding its own `project.godot`, but it warns on every import when
 it does; the ignore file silences that and covers any future prototype that has no
-`project.godot` of its own. Because nothing here is imported, these files have no `.uid`
-or `.import` sidecars, and the usual rule about committing those does not apply.
+`project.godot` of its own.
+
+The main project never imports a prototype, but **running one does** — it is a project in
+its own right, so Godot writes `.uid` sidecars beside its scripts and normalizes its
+`project.godot` on first open. Those are committed, so a run leaves the working tree
+clean; the engine-owned `.godot/` directory is gitignored as everywhere else. If a run
+does leave `project.godot` modified, it is Godot rewriting defaults — check the diff
+before committing it, and never commit a rewrite of the **root** `project.godot` that
+arrived this way.
 
 GDScript here **is** linted — `scripts/lint.sh` finds every `*.gd` outside `addons/`.
 Rough is fine, unparseable is not.
