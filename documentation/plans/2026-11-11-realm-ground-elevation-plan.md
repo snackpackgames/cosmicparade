@@ -106,7 +106,7 @@ not exercise. Each has a test in the task that owns the code.
 |---|---|---|
 | 1 | Hex coordinates, the six domains, and the influence-zone input | — |
 | 2 | The elevation rule as a pure derived accessor | Phase 1 |
-| 3 | The board: per-hex columns, discrete risers, prism collision | Phase 2 |
+| 3 | The board: per-hex columns, discrete risers, prism collision, then `adr/0014` | Phase 2 |
 
 One issue per phase. Commit after each task.
 
@@ -961,13 +961,96 @@ git add realm/realm.tscn test/unit/realm/test_realm_board.gd
 git commit -m "feat: add the realm scene with a board, camera and environment"
 ```
 
+### Task 3.5 — Record the decision as an ADR
+
+**Files:**
+- Create: `documentation/adr/0014-burgeon-raises-the-ground.md`
+- Modify: `README.md` — the *What generates elevation?* entry under *Open Design Questions*
+
+**Interfaces:** none. This task writes prose, and no task consumes it.
+
+The map carries this as a standing preference for the whole effort: the elevation reasoning
+lands in `documentation/adr/` where the rest of M1 can cite it. `0014` is the next free
+number. It comes last because the ADR records the shape that shipped, the no-new-layer call
+included.
+
+Every decision the ADR states is already settled, and the ticket that settled it is linked
+below. **Write them down; do not re-derive, soften or extend them.** `adr/0005` and
+`adr/0009` are the house shape at the right length: a `#` title, prose giving the decision and
+why it beat the alternatives, then `## Consequences`.
+
+- [ ] **Step 1: Write `documentation/adr/0014-burgeon-raises-the-ground.md`**
+
+Title: `# Burgeon raises the ground`. The body states each of the following, one or two
+sentences each, in this order:
+
+- Burgeon is what raises a hex, so a lone zone raises nothing and the second overlapping zone
+  of the same domain is the first riser
+  ([#27](https://github.com/snackpackgames/cosmicparade/issues/27), [#37](https://github.com/snackpackgames/cosmicparade/issues/37)).
+- Depth is capped at 4, and the step is `0.35 × hex circumradius` — a ratio of hex size, never
+  a world-space constant. The cap lands on depth at the source, not on rendered height
+  ([#29](https://github.com/snackpackgames/cosmicparade/issues/29)).
+- Where several domains burgeon on one hex the depths are compared, not added: the hex takes
+  the maximum ([#40](https://github.com/snackpackgames/cosmicparade/issues/40)).
+- Height is derived from the influence zones on demand and never stored, which is what lets a
+  hypothetical arrangement be evaluated without mutating the board
+  ([#33](https://github.com/snackpackgames/cosmicparade/issues/33), [#31](https://github.com/snackpackgames/cosmicparade/issues/31)).
+- The rise is discrete risers, never a smoothed slope. The prototype in
+  `test/prototypes/28-raised-hex-ground-legibility/` is the evidence
+  ([#28](https://github.com/snackpackgames/cosmicparade/issues/28)).
+- One rule for all six domains; nothing branches per domain
+  ([#32](https://github.com/snackpackgames/cosmicparade/issues/32)).
+- Raised ground stays on `realm_space` and the layer table does not change, because a raised
+  hex is still a hex space of the realm board
+  ([#39](https://github.com/snackpackgames/cosmicparade/issues/39)).
+- Removing furniture lowers the ground it raised, immediately and with no high-water mark
+  ([#38](https://github.com/snackpackgames/cosmicparade/issues/38)).
+
+Rejected alternatives, taken from `README.md → Open Design Questions` as it reads before Step
+2 edits it: height-driven generation, rejected before this map was charted as too unpredictable
+to decorate on; elevation as a property of specific furniture; and authored relief shipped with
+the floating rock. Burgeon won because it gives an existing mechanic a physical meaning and
+makes intensity visible without taking height out of the player's hands.
+
+`## Consequences` records what this leaves open rather than what it builds: height becomes a
+per-piece placement criterion, read against the board including the placing piece's own
+influence ([#30](https://github.com/snackpackgames/cosmicparade/issues/30), [#41](https://github.com/snackpackgames/cosmicparade/issues/41));
+the per-domain read and the depth-4 "maxed" read are authored art on a raised hex, deferred
+([#32](https://github.com/snackpackgames/cosmicparade/issues/32), [#42](https://github.com/snackpackgames/cosmicparade/issues/42));
+and whether a depth of 4 is reachable in play depends on influence zone size, which the
+realm board map owns.
+
+- [ ] **Step 2: Move the question out of `README.md → Open Design Questions`**
+
+Delete the whole **What generates elevation?** paragraph from *Open Design Questions*, and add
+one bullet to *Settled Decisions* in that section's style — a bold lede then prose, with no ADR
+link, since no bullet there carries one:
+
+> - **Burgeon raises the ground.** The same domain's influence overlapping itself lifts the
+>   hexes it covers, one discrete riser per overlap past the first, to a ceiling of four. A
+>   hex's height is derived from the influence on it, so removing furniture lowers the ground
+>   it raised.
+
+- [ ] **Step 3: Verify the question is gone and the ADR is in place**
+
+Run: `! grep -q 'What generates elevation' README.md && ls documentation/adr/0014-*.md`
+Expected: the ADR path printed. Any output from `grep` instead means Step 2 is incomplete.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add documentation/adr/0014-burgeon-raises-the-ground.md README.md
+git commit -m "docs: record burgeon as what raises the realm's ground"
+```
+
 ---
 
 ## What is finished when this plan is done
 
 The rule is implemented and pinned by tests; a hex's height is derived from the influence zones
 covering it with nothing stored; and the board renders it as discrete risers with per-hex prism
-collision on `realm_space`. That is the map's destination.
+collision on `realm_space`. `documentation/adr/0014` records why, and `README.md` no longer
+lists elevation as an open question. That is the map's destination.
 
 Three things the map settled that are **deliberately not built here**, each waiting on a system
 this plan does not touch:
