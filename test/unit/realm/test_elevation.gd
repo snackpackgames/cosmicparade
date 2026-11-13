@@ -69,3 +69,46 @@ func test_every_domain_raises_ground_identically() -> void:
 # Review Focus 4: a zone that covers nothing on the hex under test.
 func test_a_zone_elsewhere_does_not_raise_this_hex() -> void:
 	assert_eq(Elevation.depth_at(Vector2i.ZERO, _zones(Domain.Kind.STONE, 3, Vector2i(9, -4))), 0)
+
+
+func test_a_flat_hex_is_at_board_level() -> void:
+	assert_almost_eq(Elevation.height_for_depth(0), 0.0, 0.0001)
+
+
+func test_one_level_is_the_step_ratio_of_the_circumradius() -> void:
+	assert_almost_eq(
+		Elevation.height_for_depth(1), 0.35 * HexCoordinates.CIRCUMRADIUS, 0.0001
+	)
+
+
+func test_the_ceiling_is_one_point_four_circumradii() -> void:
+	assert_almost_eq(
+		Elevation.height_for_depth(Elevation.MAX_DEPTH), 1.40 * HexCoordinates.CIRCUMRADIUS, 0.0001
+	)
+
+
+func test_every_level_is_the_same_height_as_every_other() -> void:
+	# Uniform, not diminishing: a drop's size has to tell you its depth.
+	# https://github.com/snackpackgames/cosmicparade/issues/29
+	for depth in range(1, Elevation.MAX_DEPTH + 1):
+		var rise := Elevation.height_for_depth(depth) - Elevation.height_for_depth(depth - 1)
+		assert_almost_eq(rise, 0.35 * HexCoordinates.CIRCUMRADIUS, 0.0001)
+
+
+func test_height_at_reads_the_arrangement() -> void:
+	assert_almost_eq(
+		Elevation.height_at(Vector2i.ZERO, _zones(Domain.Kind.STONE, 3, Vector2i.ZERO)),
+		2.0 * 0.35 * HexCoordinates.CIRCUMRADIUS,
+		0.0001
+	)
+
+
+func test_evaluating_an_arrangement_does_not_change_anything() -> void:
+	# Derived, no cache, no stored height: calling twice with a different
+	# arrangement in between must not carry anything over.
+	# https://github.com/snackpackgames/cosmicparade/issues/33
+	var raised := _zones(Domain.Kind.STONE, 3, Vector2i.ZERO)
+	var none: Array[InfluenceZone] = []
+	assert_gt(Elevation.height_at(Vector2i.ZERO, raised), 0.0)
+	assert_almost_eq(Elevation.height_at(Vector2i.ZERO, none), 0.0, 0.0001)
+	assert_gt(Elevation.height_at(Vector2i.ZERO, raised), 0.0)

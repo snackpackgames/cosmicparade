@@ -15,3 +15,11 @@ static func depth_at(hex: Vector2i, zones: Array[InfluenceZone]) -> int:
 	for count: int in zone_counts.values():
 		depth = maxi(depth, mini(MAX_DEPTH, maxi(0, count - 1)))
 	return depth
+
+
+static func height_for_depth(depth: int) -> float:
+	return depth * STEP_RATIO * HexCoordinates.CIRCUMRADIUS
+
+
+static func height_at(hex: Vector2i, zones: Array[InfluenceZone]) -> float:
+	return height_for_depth(depth_at(hex, zones))
