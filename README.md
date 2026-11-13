@@ -430,6 +430,10 @@ Decided; the document above reflects them. These are ADR candidates.
 - **A starting kit seeds the opening hours; it is not a class.** Players steer their
   bags, furniture and friendships wherever they want. Nothing is locked to the domain
   you began with.
+- **Burgeon raises the ground.** The same domain's influence overlapping itself lifts the
+  hexes it covers, one discrete riser per overlap past the first, to a ceiling of four. A
+  hex's height is derived from the influence on it, so removing furniture lowers the ground
+  it raised.
 
 ## Open Design Questions
 
@@ -473,15 +477,6 @@ which component decides the trigger. Candidates: the dye carries both faces as a
 paired effect; the clay sets the trigger condition while the dye sets both effects;
 or the reverse face is derived from the front by a fixed rule (inverted, spent,
 exhausted). This needs answering before a tile can be built at all.
-
-**What generates elevation?** Features now require height — a waterfall must have a
-drop to fall down — but the realm is a flat hex board and no system raises or lowers
-ground. Height-driven generation was considered and rejected as too unpredictable to
-decorate on, so elevation needs another source. The strongest candidate is **burgeon**:
-if stacking the same domain raises terrain, burgeon gains a physical meaning and
-intensity becomes visible, without surrendering player control the way fully emergent
-height would. Alternatives: elevation is a property of specific furniture; or the
-floating rock ships with authored relief that the player works around.
 
 **"Avatar" is overloaded.** It now formally means the player's cosmetic look, but the
 Summon action also describes burning offerings to call "the **avatar** of a lesser
