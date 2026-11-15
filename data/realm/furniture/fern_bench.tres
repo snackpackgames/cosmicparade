@@ -1,6 +1,18 @@
-[gd_resource type="Resource" script_class="Furniture" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="Furniture" load_steps=7 format=3]
 
 [ext_resource type="Script" uid="uid://desvi7d7hew3l" path="res://realm/furniture.gd" id="1_furniture"]
+[ext_resource type="Script" path="res://realm/placement_criterion.gd" id="4_crit"]
+[ext_resource type="Script" path="res://realm/domain_influence_criterion.gd" id="2_inf"]
+[ext_resource type="Script" path="res://realm/level_footprint_criterion.gd" id="3_lvl"]
+
+[sub_resource type="Resource" id="2_inf_inst"]
+script = ExtResource("2_inf")
+domain = 0
+minimum = 2
+
+[sub_resource type="Resource" id="3_lvl_inst"]
+script = ExtResource("3_lvl")
+
 
 [resource]
 script = ExtResource("1_furniture")
@@ -9,3 +21,4 @@ domain = 0
 shape = 2
 anchor = Vector2i(1, 0)
 zone_radius = 1
+criteria = Array[ExtResource("4_crit")]([SubResource("2_inf_inst"), SubResource("3_lvl_inst")])
