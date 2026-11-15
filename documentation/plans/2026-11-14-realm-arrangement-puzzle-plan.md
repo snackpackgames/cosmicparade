@@ -257,10 +257,17 @@ Every later task is arithmetic over these four. Keeping them on `HexCoordinates`
 convention — one source of truth for hex geometry — and means no other file knows the lattice.
 
 `DIRECTIONS` is the six unit steps in order: `(1, 0)`, `(1, -1)`, `(0, -1)`, `(-1, 0)`,
-`(-1, 1)`, `(0, 1)`. One 60° step on the flat-top axial lattice is `(q, r) → (-r, q + r)`, which
-has order 6; `rotate` applies it `posmod(steps, 6)` times. This is the same rotation the wing
-prototype used (`test/prototypes/61-wing-vocabulary/main.gd`), so its measured orientation counts
-mean here what they meant there.
+`(-1, 1)`, `(0, 1)`. One 60° step on the flat-top axial lattice is `(q, r) → (q + r, -q)`, which
+has order 6; `rotate` applies it `posmod(steps, 6)` times.
+
+**The sign matters and this plan first had it backwards.** There are two 60° steps,
+`(q, r) → (q + r, -q)` and `(q, r) → (-r, q + r)`, and they turn opposite ways. Only the first
+walks `DIRECTIONS` forwards — `rotate(DIRECTIONS[i], 1) == DIRECTIONS[i + 1]` — which is what the
+tests below require, so **the tests are the specification and this paragraph follows them**. The
+wing prototype (`test/prototypes/61-wing-vocabulary/main.gd`) used the other sign; that changes
+handedness only, and an orientation count is the size of an orbit under a group of order 6, so
+the prototype's measured counts (disc 1, trapezoid 6, triangle 2, rhombus 3) mean here exactly
+what they meant there — Task 1.2's test re-derives them from the authored offsets anyway.
 
 - [ ] **Step 1: Write the failing tests**
 

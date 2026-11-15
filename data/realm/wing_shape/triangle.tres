@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="WingShape" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://cyxrqpfpfenf6" path="res://realm/wing_shape.gd" id="1_shape"]
+
+[resource]
+script = ExtResource("1_shape")
+shape_name = "triangle"
+offsets = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(0, 2)])
+distinct_orientations = 2

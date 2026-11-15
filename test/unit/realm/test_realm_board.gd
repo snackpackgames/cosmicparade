@@ -3,6 +3,9 @@ extends GutTest
 
 const REALM_SCENE := preload("res://realm/realm.tscn")
 const HEXES: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1)]
+# HEXES with the one hex a Swell brings. Spelt out because adding two typed arrays
+# yields an untyped one, which set_hexes refuses.
+const GROWN: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1), Vector2i(5, 0)]
 
 
 func _board(zones: Array[InfluenceZone]) -> RealmBoard:
@@ -71,6 +74,47 @@ func test_rebuilding_a_hex_the_board_does_not_hold_is_a_no_op() -> void:
 	board.rebuild([Vector2i(99, -99)] as Array[Vector2i])
 	assert_null(board.hex_space(Vector2i(99, -99)))
 	assert_eq(board.get_child_count(), HEXES.size())
+
+
+func test_set_hexes_adds_the_spaces_a_swell_brings() -> void:
+	var board := _board([] as Array[InfluenceZone])
+	board.set_hexes(GROWN)
+	assert_not_null(board.hex_space(Vector2i(5, 0)))
+	assert_eq(board.get_child_count(), 4)
+
+
+func test_set_hexes_frees_the_spaces_a_lifted_wing_takes_away() -> void:
+	var board := _board([] as Array[InfluenceZone])
+	board.set_hexes([Vector2i.ZERO] as Array[Vector2i])
+	await wait_frames(1)
+	assert_null(board.hex_space(Vector2i(1, 0)))
+	assert_eq(board.get_child_count(), 1)
+
+
+func test_set_hexes_leaves_an_unchanged_space_alone() -> void:
+	var board := _board([] as Array[InfluenceZone])
+	var space := board.hex_space(Vector2i.ZERO)
+	board.set_hexes(GROWN)
+	assert_eq(board.hex_space(Vector2i.ZERO), space, "the same node, not a rebuilt one")
+
+
+func test_a_new_space_takes_the_depth_the_zones_already_give_it() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/59 — a Swell can raise
+	# ground on the new land with nothing newly placed.
+	var board := _board([
+		InfluenceZone.new(Domain.Kind.FOREST, [Vector2i(5, 0)]),
+		InfluenceZone.new(Domain.Kind.FOREST, [Vector2i(5, 0)]),
+	] as Array[InfluenceZone])
+	board.set_hexes(GROWN)
+	assert_almost_eq(
+		board.hex_space(Vector2i(5, 0)).top_height(), Elevation.height_for_depth(1), 0.0001
+	)
+
+
+func test_the_realm_scene_builds_a_radius_three_board() -> void:
+	var realm: Node3D = add_child_autofree(REALM_SCENE.instantiate())
+	await wait_frames(1)
+	assert_eq(realm.get_node("RealmBoard").get_child_count(), 37)
 
 
 func test_the_realm_scene_instantiates_with_a_board() -> void:
