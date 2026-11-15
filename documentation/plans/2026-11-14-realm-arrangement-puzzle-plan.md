@@ -170,6 +170,15 @@ unaffected**: radius 2 was rejected because a three-hex piece claims three quart
 board, which 29/37 says more strongly than 27/37. Use the real geometry in tests; do not
 reproduce the table's figure.
 
+### One toolchain hazard, found while building Phase 2
+
+**Never name a local `set` or `get`.** `gdlint` treats both as grammar keywords and fails to
+*parse* the file — `var set: Dictionary = {}` followed by `set[hex] = true` reports
+`Unexpected token Token('LSQB', '[')` and nothing else, with no rule name to look up. Godot
+itself accepts the code, so **GUT goes green while lint fails**, and the pre-push hook is where
+it surfaces. Several tasks below build a hex set as a `Dictionary`; call it `hex_set`, matching
+`RealmGeometry._is_one_patch(hex_set)`.
+
 ### What this plan does not decide, and must not invent
 
 - **What an overlap produces.** Meld and burgeon *resolution* — which domains fuse into which
