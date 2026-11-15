@@ -6,12 +6,11 @@ extends GameData
 ## footprint, and a criterion only ever refuses: it may never modify a zone, a radius or a depth.
 ## https://github.com/snackpackgames/cosmicparade/issues/55
 ##
-## The base refuses nothing. The concrete criteria arrive in Phase 3, which is also where
-## `context` gains its `PlacementContext` type.
+## The base refuses nothing.
 
 
 ## The hexes of the footprint this criterion refuses, which is none of them for the base.
-func failing_hexes(_context) -> Array[Vector2i]:
+func failing_hexes(_context: PlacementContext) -> Array[Vector2i]:
 	return [] as Array[Vector2i]
 
 
