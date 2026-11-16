@@ -21,6 +21,11 @@ const EXPECTED_LAYER_NAMES := {
 	26: "tile",
 }
 
+const EXPECTED_REALM_ACTIONS := [
+	"realm_lift_or_place", "realm_cancel", "realm_rotate",
+	"realm_target_left", "realm_target_right", "realm_target_forward", "realm_target_back",
+]
+
 
 func test_main_scene_is_the_title_screen() -> void:
 	assert_eq(
@@ -70,3 +75,17 @@ func test_every_decided_3d_physics_layer_is_named() -> void:
 			expected,
 			"3D physics layer %d should be named %s" % [bit, expected]
 		)
+
+
+func test_the_carry_verb_is_input_map_actions_not_mouse_events() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/54 -- one abstraction,
+	# so mouse and gamepad are the same path.
+	for action: String in EXPECTED_REALM_ACTIONS:
+		assert_true(
+			ProjectSettings.has_setting("input/%s" % action), "%s should be bound" % action
+		)
+		var has_joypad := false
+		for event in ProjectSettings.get_setting("input/%s" % action)["events"]:
+			has_joypad = has_joypad or event is InputEventJoypadButton \
+				or event is InputEventJoypadMotion
+		assert_true(has_joypad, "%s should be bound for gamepad" % action)
