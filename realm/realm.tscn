@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://realm/realm.gd" id="1_realm"]
 [ext_resource type="Script" path="res://realm/realm_board.gd" id="2_board"]
@@ -6,6 +6,10 @@
 [ext_resource type="Script" path="res://realm/hex_cursor.gd" id="3_cursor"]
 [ext_resource type="Script" path="res://realm/carry.gd" id="4_carry"]
 [ext_resource type="Script" path="res://realm/furniture_view.gd" id="5_view"]
+
+[ext_resource type="Script" path="res://realm/refusal_display.gd" id="6_refusal"]
+[ext_resource type="Script" path="res://realm/spill_display.gd" id="7_spill"]
+[ext_resource type="Script" path="res://realm/requirement_list.gd" id="8_list"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -27,6 +31,25 @@ script = ExtResource("4_carry")
 
 [node name="FurnitureView" type="Node3D" parent="."]
 script = ExtResource("5_view")
+
+[node name="RefusalDisplay" type="Node3D" parent="."]
+script = ExtResource("6_refusal")
+
+[node name="SpillDisplay" type="Node3D" parent="."]
+script = ExtResource("7_spill")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="RequirementList" type="Control" parent="HUD"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 316.0
+offset_bottom = 216.0
+mouse_filter = 2
+script = ExtResource("8_list")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(0.819152, -0.3687, 0.43944, 0, 0.766044, 0.642788, -0.573576, -0.52654, 0.627507, 4.4, 8.0, 7.5)

@@ -8,6 +8,10 @@ func _stool() -> Furniture:
 	return load("res://data/realm/furniture/mushroom_stool.tres")
 
 
+func _bench() -> Furniture:
+	return load("res://data/realm/furniture/fern_bench.tres")
+
+
 func _realm() -> Realm:
 	var realm: Realm = add_child_autofree(REALM_SCENE.instantiate())
 	await wait_frames(1)
@@ -129,3 +133,52 @@ func test_the_realm_scene_is_still_not_the_main_scene() -> void:
 	assert_eq(
 		ProjectSettings.get_setting("application/run/main_scene"), "res://ui/title/title.tscn"
 	)
+
+
+func test_the_board_says_nothing_until_a_target_fails() -> void:
+	var realm := await _realm()
+	realm.lift_from_inventory(_stool())
+	assert_eq(realm.refusal.marked_hexes(), [] as Array[Vector2i])
+	assert_eq(realm.requirements.lines(), [])
+
+
+func test_a_refusal_marks_the_hexes_and_the_requirements_at_once() -> void:
+	var realm := await _realm()
+	realm.lift_from_inventory(_bench())
+	realm.carry.aim(Vector2i.ZERO)
+	assert_eq(realm.refusal.marked_hexes().size(), 3)
+	assert_eq(realm.requirements.failing_lines(), ["Forest >= 2"])
+
+
+func test_both_channels_clear_when_the_carry_ends() -> void:
+	var realm := await _realm()
+	realm.lift_from_inventory(_bench())
+	realm.carry.aim(Vector2i.ZERO)
+	realm.carry.cancel()
+	assert_eq(realm.refusal.marked_hexes(), [] as Array[Vector2i])
+	assert_eq(realm.requirements.lines(), [])
+
+
+func test_carrying_over_the_rim_draws_the_spill_without_refusing_the_placement() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/59
+	var realm := await _realm()
+	realm.lift_from_inventory(_stool())
+	realm.carry.aim(Vector2i(3, -1))
+	assert_true(realm.carry.verdict().allowed)
+	assert_eq(realm.spill.spilled_hexes().size(), 2)
+	assert_eq(realm.refusal.marked_hexes(), [] as Array[Vector2i])
+
+
+func test_lifting_an_unplaceable_piece_announces_the_requirement_nothing_satisfies() -> void:
+	var realm := await _realm()
+	watch_signals(realm)
+	realm.lift_from_inventory(_bench())
+	assert_signal_emitted(realm, "nothing_satisfies")
+	assert_true(realm.carry.is_carrying(), "the player still gets to carry it and look")
+
+
+func test_lifting_a_placeable_piece_announces_nothing() -> void:
+	var realm := await _realm()
+	watch_signals(realm)
+	realm.lift_from_inventory(_stool())
+	assert_signal_not_emitted(realm, "nothing_satisfies")
