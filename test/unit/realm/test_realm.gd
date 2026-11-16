@@ -258,3 +258,62 @@ func test_a_wing_whose_lift_would_orphan_the_board_is_not_lifted() -> void:
 	realm.cursor.aim_at(Vector2i(7, -1))
 	realm.lift_wing_under_cursor()
 	assert_false(realm.carry.is_carrying())
+
+
+func _fruit(domain: Domain.Kind) -> Fruit:
+	var fruit := Fruit.new()
+	fruit.fruit_name = "test fruit"
+	fruit.domain = domain
+	return fruit
+
+
+func _shrine() -> Shrine:
+	var shrine := Shrine.new()
+	shrine.piece_name = "test shrine"
+	return shrine
+
+
+# Places a fed shrine at `hex` and returns its placement.
+func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> ShrinePlacement:
+	var placement := ShrinePlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
+	placement.offering = _fruit(domain)
+	state.place(placement)
+	return placement
+
+
+func test_lifting_from_an_empty_stock_does_nothing() -> void:
+	# Review Focus 3. Capacity is the only thing limiting shrines
+	# (https://github.com/snackpackgames/cosmicparade/issues/74), so an empty stock must
+	# be inert rather than conjuring one.
+	var realm := await _realm()
+	_place_shrine(realm.state, Vector2i(-2, 0), Domain.Kind.FOREST)
+	_place_shrine(realm.state, Vector2i(2, 0), Domain.Kind.FOREST)
+	assert_eq(realm.state.shrines_in_stock(), 0)
+
+	realm.lift_from_stock()
+
+	assert_false(realm.carry.is_carrying())
+	assert_eq(realm.state.placements.size(), 2)
+
+
+func test_a_shrine_is_lifted_from_stock_through_the_same_carry() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/74 -- no second placement
+	# path, and nothing new in the carry state machine.
+	var realm := await _realm()
+
+	realm.lift_from_stock()
+
+	assert_true(realm.carry.is_carrying())
+	assert_true(realm.carry.carried is CarriedPiece)
+	realm.carry.place()
+	assert_eq(realm.state.shrine_placements().size(), 1)
+	assert_eq(realm.state.shrines_in_stock(), 1)
+
+
+func test_a_shrine_placed_from_stock_arrives_with_an_empty_vessel() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/75 -- a shrine projects what is
+	# offered, and nothing has been offered yet.
+	var realm := await _realm()
+	realm.lift_from_stock()
+	realm.carry.place()
+	assert_eq(realm.state.shrine_zones().size(), 0)

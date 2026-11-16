@@ -13,3 +13,8 @@ extends BoardPiece
 ## https://github.com/snackpackgames/cosmicparade/issues/75
 
 const ZONE_RADIUS := 2
+
+
+
+func placement_at(orientation: int, hexes: Array[Vector2i]) -> BoardPlacement:
+	return ShrinePlacement.new(self, orientation, hexes)

@@ -8,9 +8,10 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
 ## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 swells the board, F10 hands the
-## player a wing to site and F11 lifts the wing under the cursor. All stand in for systems that do
-## not exist yet (the inventory, adr/0011, and what buys a Swell), and `lift_from_inventory`,
-## `swell`, `attach_wing` and `lift_wing_under_cursor` are the seams those will attach to.
+## player a wing to site, F11 lifts the wing under the cursor and F12 lifts a shrine from stock.
+## All stand in for systems that do not exist yet (the inventory, adr/0011, and what buys a
+## Swell), and `lift_from_inventory`, `swell`, `attach_wing`, `lift_wing_under_cursor` and
+## `lift_from_stock` are the seams those will attach to.
 
 signal piece_returned(piece: BoardPiece)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
@@ -20,6 +21,7 @@ signal nothing_satisfies(criteria: Array[PlacementCriterion])
 
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
 const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
+const SHRINE := preload("res://data/realm/shrine/plain_shrine.tres")
 
 var state := RealmState.new(RealmGeometry.new())
 
@@ -73,6 +75,17 @@ func lift_under_cursor() -> void:
 	_touch(origin.zone().coordinates())
 	carry.lift(CarriedPiece.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
 	_announce_if_impossible(origin.piece, grab_offset)
+
+
+## Lifts a shrine out of the player's stock, through the very same path furniture takes from
+## inventory — no second placement path, and nothing new in the carry state machine. Inert when
+## the stock is empty: capacity is the only thing limiting shrines, so with all of them placed
+## there is nothing to lift and nothing is conjured.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+func lift_from_stock() -> void:
+	if state.shrines_in_stock() <= 0:
+		return
+	lift_from_inventory(SHRINE)
 
 
 ## Hands the player a wing to site. A wing goes through the same carry furniture does, so there
@@ -142,6 +155,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			lift_from_inventory(DEBUG_PIECE)
 		elif event.keycode == KEY_F9:
 			swell()
+		elif event.keycode == KEY_F10:
+			attach_wing(DEBUG_WING)
+		elif event.keycode == KEY_F11:
+			lift_wing_under_cursor()
+		elif event.keycode == KEY_F12:
+			lift_from_stock()
 
 
 # Rotating while idle over a piece lifts it, turned one step. Furniture only, never a wing:

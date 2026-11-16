@@ -6,8 +6,16 @@ extends RefCounted
 ## them, the same ruling height got.
 ## https://github.com/snackpackgames/cosmicparade/issues/59
 
+## How many shrines the realm owns. Rises only on the two ring Swells, to 4, and never again.
+## Capacity lives here and the adherent balance does not: capacity is a property of the realm,
+## while adherents are earned in the parade and spent here.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+## https://github.com/snackpackgames/cosmicparade/issues/80
+const STARTING_SHRINE_CAPACITY := 2
+
 var geometry: RealmGeometry
 var placements: Array[BoardPlacement] = []
+var shrine_capacity := STARTING_SHRINE_CAPACITY
 
 # Which piece stands on a hex, keyed by hex. One index over furniture, shrines and the Altar
 # alike: footprints never overlap is one rule, not three.
@@ -31,6 +39,13 @@ func zones() -> Array[InfluenceZone]:
 		if zone != null:
 			result.append(zone)
 	return result
+
+
+## What the player holds in hand: one shrine per point of capacity, minus the ones standing on
+## the board. Derived, never stored — there is no inventory object to desynchronise.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+func shrines_in_stock() -> int:
+	return shrine_capacity - shrine_placements().size()
 
 
 ## The zones of the fed shrines alone — the narrower question the Altar asks. `zones()` keeps
