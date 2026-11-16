@@ -6,6 +6,10 @@ func _disc() -> WingShape:
 	return load("res://data/realm/wing_shape/disc.tres")
 
 
+func _triangle() -> WingShape:
+	return load("res://data/realm/wing_shape/triangle.tres")
+
+
 func _stool() -> Furniture:
 	return load("res://data/realm/furniture/mushroom_stool.tres")
 
@@ -161,7 +165,7 @@ func test_a_wing_turned_in_hand_turns_what_stands_on_it() -> void:
 	var geometry := RealmGeometry.new()
 	geometry.swell()
 	geometry.swell()
-	var triangle: WingShape = load("res://data/realm/wing_shape/triangle.tres")
+	var triangle := _triangle()
 	geometry.attach(triangle, 0, Vector2i(6, 0))
 	var state := RealmState.new(geometry)
 	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(8, 0)] as Array[Vector2i]))
@@ -187,3 +191,20 @@ func test_a_wing_landing_beside_a_rim_piece_leaves_it_exactly_where_it_is() -> v
 	assert_true(geometry.is_edge_hex(Vector2i(5, 0)), "placed on the rim under require_edge")
 	geometry.attach(_disc(), 0, Vector2i(7, -1))
 	assert_eq(state.occupant_at(Vector2i(5, 0)), placement, "still there, never re-validated")
+
+
+func test_cancelling_puts_the_wing_back_at_the_orientation_it_was_lifted_at() -> void:
+	var geometry := RealmGeometry.new()
+	geometry.swell()
+	geometry.swell()
+	var triangle := _triangle()
+	geometry.attach(triangle, 2, Vector2i(6, 0))
+	var state := RealmState.new(geometry)
+	var carried := CarriedWing.new(triangle, Vector2i(6, 0), 0)
+	carried.detach(state)
+	carried.restore(state)
+	assert_eq(geometry.hexes().size(), 97)
+	assert_true(
+		geometry.has_hex(Vector2i(6, -2)),
+		"the turned figure is back, not the one the shape is authored at"
+	)
