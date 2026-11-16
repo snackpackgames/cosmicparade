@@ -172,8 +172,10 @@ Twelve avatars against six kits gives 72 distinct openings from very little cont
 
 ### Realm
 
-A floating rock of fixed tile size, starting at **10×10 hex spaces**, with **2
-shrine slots**.
+A floating rock, starting as a **radial hexagon of radius 3 — 37 hex spaces, 7
+across** — centred on the board's origin, with **2 shrine slots**. The board is
+generated from its radius rather than stored as a list of spaces, so growth is a
+matter of one number and an ordered set of wings (`adr/0015`).
 
 **Shrine slots** — a fixed *number* of slots, freely positioned by the player so long
 as no two shrines overlap. Fruit placed in a shrine's offering slot produces an
@@ -182,12 +184,23 @@ Offerings may be pulled out and swapped early; a partly-consumed offering can be
 replaced later.
 
 **Swell** — spend adherents accrued from pageants to grow the realm's size and its
-number of shrine slots.
+number of shrine slots. Growth is **two-phase**: the first two Swells each add a
+whole ring, taking the core to **radius 5 — 91 spaces** (where the original "10×10"
+lands on a hex lattice), and the core never grows concentrically again. Every Swell
+after that attaches a **wing** — one figure from a closed vocabulary of four, six or
+seven spaces each — which the player sites anywhere edge-adjacent to the board and
+turns as they like. A wing is just more board: same lattice, no seam, no rule knows a
+space is on one. Wings may be picked up and reattached with their contents.
 
-**Furniture** — placeable on any tile whose criteria it meets. Each piece projects a
-**zone of domain influence**. These zones affect shrines, and where zones overlap
-they either **meld** (different types → a new type) or **burgeon** (same type →
-greater strength).
+**Furniture** — each piece occupies a **footprint** of one to three spaces from a
+closed set of five, turns in six 60° steps, and projects one **zone of domain
+influence** grown from every space it occupies. Furniture is **carried** onto the
+board: lift, aim, place, cancel, with the piece riding one targeted space and the
+ground previewing what it would do. A placement must satisfy all of the piece's
+**criteria** — drawn from five gate types (height, level footprint, domain influence
+count, clearance, board position) — on **every** space of the footprint (`adr/0016`).
+These zones affect shrines, and where zones overlap they either **meld** (different
+types → a new type) or **burgeon** (same type → greater strength).
 
 **Altar** — every realm must have one; it can be moved. Unlike furniture, the Altar
 is affected by the influence of **shrines**, which further shapes the outcome of
@@ -434,6 +447,20 @@ Decided; the document above reflects them. These are ADR candidates.
   hexes it covers, one discrete riser per overlap past the first, to a ceiling of four. A
   hex's height is derived from the influence on it, so removing furniture lowers the ground
   it raised.
+- **The realm grows by rings, then wings.** The board is a radial hexagon generated from a
+  radius — 37 spaces at the start — because a radial board has no privileged direction and
+  reads as an island rather than a cut-out of graph paper. Two ring Swells take the core to
+  91 and it never grows concentrically again; every Swell after that attaches a wing from a
+  closed vocabulary of four figures, sited and turned by the player, edge-adjacent to any
+  space the board already has. A wing is just more board — same lattice, no seam, relocatable
+  with its contents — and the origin never moves, so nothing placed ever shifts.
+- **Furniture is carried onto gated spaces.** A piece occupies one of five footprints at one
+  of six orientations and projects exactly one influence zone, grown from every space it
+  occupies; footprints never overlap, influence does. Placement is a **gate**: five criterion
+  types, all of which must pass on every space of the footprint, and none of which may change
+  what the piece projects. The verb is carry rather than drag, because the targeting state is
+  where the arrangement puzzle actually happens and a held button would make studying the
+  board cost the player their hand.
 
 ## Open Design Questions
 
@@ -538,5 +565,9 @@ with. That points at retiring the Meld starting tile rather than defining it.
   | 0010 | The blight is a board condition, not an AI opponent |
   | 0011 | Furniture: pageants teach, the realm builds |
   | 0012 | Avatar and starting kit are separate choices |
+  | 0013 | Repo layout follows the area labels |
+  | 0014 | Burgeon raises the ground |
+  | 0015 | The realm grows by rings, then wings |
+  | 0016 | Furniture is carried onto gated spaces |
 - `documentation/plans/` — implementation plans for features in progress.
 - `notes/` — working material. Not authoritative.
