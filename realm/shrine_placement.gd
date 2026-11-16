@@ -8,6 +8,12 @@ extends BoardPlacement
 var offering: Fruit
 
 
+func relocated(new_orientation: int, new_hexes: Array[Vector2i]) -> BoardPlacement:
+	var moved := ShrinePlacement.new(piece, new_orientation, new_hexes)
+	moved.offering = offering
+	return moved
+
+
 func zone() -> InfluenceZone:
 	if offering == null:
 		return null

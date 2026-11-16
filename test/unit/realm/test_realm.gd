@@ -258,3 +258,30 @@ func test_a_wing_whose_lift_would_orphan_the_board_is_not_lifted() -> void:
 	realm.cursor.aim_at(Vector2i(7, -1))
 	realm.lift_wing_under_cursor()
 	assert_false(realm.carry.is_carrying())
+
+
+func test_lifting_from_an_empty_stock_does_nothing() -> void:
+	# Review Focus 3. Capacity is the only thing limiting shrines
+	# (https://github.com/snackpackgames/cosmicparade/issues/74), so an empty stock must
+	# be inert rather than conjuring one.
+	var realm := await _realm()
+	for hex in [Vector2i(-2, 0), Vector2i(2, 0)]:
+		var shrine := ShrinePlacement.new(
+			load("res://data/realm/shrine/plain_shrine.tres"), 0, [hex] as Array[Vector2i]
+		)
+		realm.state.place(shrine)
+	assert_eq(realm.state.shrines_in_stock(), 0)
+
+	realm.lift_from_stock()
+
+	assert_false(realm.carry.is_carrying())
+	assert_eq(realm.state.placements.size(), 2)
+
+
+func test_a_shrine_lifted_from_stock_lands_as_a_shrine_placement() -> void:
+	var realm := await _realm()
+	realm.lift_from_stock()
+	realm.carry.aim(Vector2i(2, 0))
+	realm.carry.place()
+	assert_eq(realm.state.shrine_placements().size(), 1)
+	assert_eq(realm.state.shrines_in_stock(), 1)

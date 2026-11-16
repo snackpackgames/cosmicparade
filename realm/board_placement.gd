@@ -18,6 +18,11 @@ func _init(board_piece: BoardPiece, piece_orientation: int, occupied: Array[Vect
 	hexes = occupied
 
 
+## The same piece standing somewhere else, carrying whatever per-placement state it holds.
+func relocated(new_orientation: int, new_hexes: Array[Vector2i]) -> BoardPlacement:
+	return BoardPlacement.new(piece, new_orientation, new_hexes)
+
+
 ## Derived on demand, never stored: one zone whatever the footprint, and `null` for a piece that
 ## projects nothing. Delegated to the piece rather than branched on here, so the board stays
 ## ignorant of what is standing on it.
