@@ -1,7 +1,8 @@
 class_name Carried
 extends RefCounted
-## Everything the carry state machine needs from the thing in hand. Subclasses: CarriedFurniture
-## now, CarriedWing in a later phase. Wings are not a second verb because they answer this.
+## Everything the carry state machine needs from the thing in hand. Subclasses: CarriedPiece,
+## for anything that stands on the board, and CarriedWing, for the board itself. Wings are not
+## a second verb because they answer this.
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 
 

@@ -26,7 +26,7 @@ var state := RealmState.new(RealmGeometry.new())
 # Every coordinate the preview has touched since the carry began, so ending it puts back
 # exactly what it disturbed.
 var _touched: Dictionary = {}
-var _inventory_piece: Furniture
+var _inventory_piece: BoardPiece
 # The wing in hand, kept because it is what knows which pieces it shook loose.
 var _carried_wing: CarriedWing
 
@@ -51,11 +51,11 @@ func _ready() -> void:
 	_refresh_view()
 
 
-func lift_from_inventory(piece: Furniture) -> void:
+func lift_from_inventory(piece: BoardPiece) -> void:
 	if carry.is_carrying():
 		return
 	_inventory_piece = piece
-	carry.lift(CarriedFurniture.new(piece, piece.anchor, null), cursor.targeted_hex)
+	carry.lift(CarriedPiece.new(piece, piece.anchor, null), cursor.targeted_hex)
 	_announce_if_impossible(piece, piece.anchor)
 
 
@@ -71,7 +71,7 @@ func lift_under_cursor() -> void:
 	var grab_offset: Vector2i = offsets[origin.hexes.find(cursor.targeted_hex)]
 	_inventory_piece = null
 	_touch(origin.zone().coordinates())
-	carry.lift(CarriedFurniture.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
+	carry.lift(CarriedPiece.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
 	_announce_if_impossible(origin.piece, grab_offset)
 
 
@@ -164,7 +164,7 @@ func _is_target_press(event: InputEvent) -> bool:
 # The sweep is a function of the committed board, which cannot change during a carry, so it runs
 # once on lift and not per frame. The piece is already detached, so a lifted piece's own hexes
 # count as free.
-func _announce_if_impossible(piece: Furniture, grab_offset: Vector2i) -> void:
+func _announce_if_impossible(piece: BoardPiece, grab_offset: Vector2i) -> void:
 	var survey := PlacementRules.survey(piece, grab_offset, state)
 	if not survey.unsatisfiable.is_empty():
 		nothing_satisfies.emit(survey.unsatisfiable)
