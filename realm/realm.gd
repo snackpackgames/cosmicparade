@@ -12,6 +12,10 @@ extends Node3D
 ## `lift_from_inventory` and `swell` are the seams those will attach to.
 
 signal piece_returned(piece: Furniture)
+## Lifted a piece no placement on the realm can satisfy, naming the requirements nothing meets.
+## An empty list never emits: that is "satisfiable apart, never together", not an errand.
+## https://github.com/snackpackgames/cosmicparade/issues/62
+signal nothing_satisfies(criteria: Array[PlacementCriterion])
 
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
 
@@ -27,11 +31,15 @@ var _inventory_piece: Furniture
 @onready var carry: Carry = $Carry
 @onready var view: FurnitureView = $FurnitureView
 @onready var camera: Camera3D = $Camera3D
+@onready var refusal: RefusalDisplay = $RefusalDisplay
+@onready var spill: SpillDisplay = $SpillDisplay
+@onready var requirements: RequirementList = %RequirementList
 
 
 func _ready() -> void:
 	board.build(state.geometry.hexes())
 	carry.configure(state)
+	carry.lifted.connect(_on_lifted)
 	carry.aimed.connect(_on_aimed)
 	carry.placed.connect(_on_carry_ended.unbind(1))
 	carry.cancelled.connect(_on_cancelled)
@@ -44,6 +52,7 @@ func lift_from_inventory(piece: Furniture) -> void:
 		return
 	_inventory_piece = piece
 	carry.lift(CarriedFurniture.new(piece, piece.anchor, null), cursor.targeted_hex)
+	_announce_if_impossible(piece, piece.anchor)
 
 
 ## Lifts the piece standing under the cursor, with the cursor's hex as the grab hex so the piece
@@ -59,6 +68,7 @@ func lift_under_cursor() -> void:
 	_inventory_piece = null
 	_touch(origin.zone().coordinates())
 	carry.lift(CarriedFurniture.new(origin.furniture, grab_offset, origin), cursor.targeted_hex)
+	_announce_if_impossible(origin.furniture, grab_offset)
 
 
 ## Grows the board one step and floods the new ground with the influence already spilling into it.
@@ -115,6 +125,18 @@ func _is_target_press(event: InputEvent) -> bool:
 	return false
 
 
+# The sweep runs once per lift: the committed board cannot change during a carry. The lift
+# stands either way, so the player may carry an unplaceable piece and look around.
+func _announce_if_impossible(piece: Furniture, grab_offset: Vector2i) -> void:
+	var survey := PlacementRules.survey(piece, grab_offset, state)
+	if not survey.unsatisfiable.is_empty():
+		nothing_satisfies.emit(survey.unsatisfiable)
+
+
+func _on_lifted(carried: Carried) -> void:
+	requirements.show_requirements(carried.describe_requirements())
+
+
 func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 	var candidate := carry.carried.zone_at(carry.target, carry.orientation)
 	_touch(candidate.coordinates())
@@ -124,6 +146,13 @@ func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 	_rebuild_touched()
 	view.show_placements(state.placements, zones)
 	view.show_ghost(hexes, verdict.allowed, zones)
+	# Two unpaired channels: failing hexes on the board, failing requirements on the piece.
+	if verdict.allowed:
+		refusal.clear()
+	else:
+		refusal.mark(verdict.failing_hexes, zones)
+	requirements.mark_failing(verdict.failing_criteria)
+	spill.show_spill(candidate, state.geometry)
 
 
 func _on_carry_ended() -> void:
@@ -132,6 +161,9 @@ func _on_carry_ended() -> void:
 	_rebuild_touched()
 	_touched.clear()
 	view.clear_ghost()
+	refusal.clear()
+	spill.clear()
+	requirements.hide_requirements()
 	_refresh_view()
 
 
