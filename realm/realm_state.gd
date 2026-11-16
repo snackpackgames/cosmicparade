@@ -33,6 +33,30 @@ func zones() -> Array[InfluenceZone]:
 	return result
 
 
+## The zones of the fed shrines alone — the narrower question the Altar asks. `zones()` keeps
+## returning everything, because #30 has fixtures raising ground like anything else, so
+## elevation must keep counting shrines. Giving `InfluenceZone` a source field instead was
+## rejected: it would make a derived object carry provenance nothing else wants.
+## https://github.com/snackpackgames/cosmicparade/issues/30
+## https://github.com/snackpackgames/cosmicparade/issues/79
+func shrine_zones() -> Array[InfluenceZone]:
+	var result: Array[InfluenceZone] = []
+	for placement in shrine_placements():
+		var zone := placement.zone()
+		if zone != null:
+			result.append(zone)
+	return result
+
+
+## Every shrine on the board, fed or empty.
+func shrine_placements() -> Array[ShrinePlacement]:
+	var result: Array[ShrinePlacement] = []
+	for placement in placements:
+		if placement is ShrinePlacement:
+			result.append(placement)
+	return result
+
+
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.
 func occupant_at(hex: Vector2i) -> BoardPlacement:
 	return _occupants.get(hex)
