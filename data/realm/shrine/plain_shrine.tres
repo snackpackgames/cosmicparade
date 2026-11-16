@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Shrine" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://realm/shrine.gd" id="1_shrine"]
+
+[resource]
+script = ExtResource("1_shrine")
+piece_name = "Shrine"
+shape = 0
+anchor = Vector2i(0, 0)
