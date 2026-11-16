@@ -1,12 +1,14 @@
 class_name PlacementRules
 extends RefCounted
 ## The single call that judges a target: siting first, then every criterion against every
-## occupied hex. A pure function of a candidate placement and the committed board.
+## occupied hex. A pure function of a candidate placement and the committed board. Judges any
+## board piece — what a piece projects is asked of the piece, never branched on here.
 ## https://github.com/snackpackgames/cosmicparade/issues/55
+## https://github.com/snackpackgames/cosmicparade/issues/74
 
 
 static func verdict(
-	piece: Furniture,
+	piece: BoardPiece,
 	orientation: int,
 	target: Vector2i,
 	grab_offset: Vector2i,
@@ -32,19 +34,19 @@ static func verdict(
 	return PlacementVerdict.new(failing_criteria.is_empty(), marked, failing_criteria)
 
 
+## The zone the piece would project from the target, or null for a piece that projects nothing.
+## https://github.com/snackpackgames/cosmicparade/issues/77
 static func zone_for(
-	piece: Furniture, orientation: int, target: Vector2i, grab_offset: Vector2i
+	piece: BoardPiece, orientation: int, target: Vector2i, grab_offset: Vector2i
 ) -> InfluenceZone:
-	return InfluenceZone.project(
-		piece.domain,
-		Footprint.occupied(piece.shape, orientation, target, grab_offset),
-		piece.zone_radius
-	)
+	return piece.zone_for(Footprint.occupied(piece.shape, orientation, target, grab_offset))
 
 
 ## One sweep over every board hex and all six orientations, run on lift. Records which criteria
 ## pass somewhere and whether some single placement passes them all.
-static func survey(piece: Furniture, grab_offset: Vector2i, state: RealmState) -> PlacementSurvey:
+static func survey(
+	piece: BoardPiece, grab_offset: Vector2i, state: RealmState
+) -> PlacementSurvey:
 	var passed_somewhere: Array[bool] = []
 	passed_somewhere.resize(piece.criteria.size())
 	passed_somewhere.fill(false)
@@ -79,11 +81,16 @@ static func _unsited(occupied: Array[Vector2i], state: RealmState) -> Array[Vect
 	return unsited
 
 
-# The board as it will be with the piece on it.
+# The board as it will be with the piece on it, own influence included — and only its own
+# influence if it has any. A piece that projects nothing adds no zone, or an empty shrine
+# vessel would be judged against a zone it does not project.
 # https://github.com/snackpackgames/cosmicparade/issues/41
+# https://github.com/snackpackgames/cosmicparade/issues/75
 static func _context_for(
-	piece: Furniture, occupied: Array[Vector2i], state: RealmState
+	piece: BoardPiece, occupied: Array[Vector2i], state: RealmState
 ) -> PlacementContext:
 	var zones := state.zones()
-	zones.append(InfluenceZone.project(piece.domain, occupied, piece.zone_radius))
+	var candidate := piece.zone_for(occupied)
+	if candidate != null:
+		zones.append(candidate)
 	return PlacementContext.new(state, occupied, zones)

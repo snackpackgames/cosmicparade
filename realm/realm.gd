@@ -12,7 +12,7 @@ extends Node3D
 ## not exist yet (the inventory, adr/0011, and what buys a Swell), and `lift_from_inventory`,
 ## `swell`, `attach_wing` and `lift_wing_under_cursor` are the seams those will attach to.
 
-signal piece_returned(piece: Furniture)
+signal piece_returned(piece: BoardPiece)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
 ## the lift still happens.
 ## https://github.com/snackpackgames/cosmicparade/issues/62
@@ -26,7 +26,7 @@ var state := RealmState.new(RealmGeometry.new())
 # Every coordinate the preview has touched since the carry began, so ending it puts back
 # exactly what it disturbed.
 var _touched: Dictionary = {}
-var _inventory_piece: Furniture
+var _inventory_piece: BoardPiece
 # The wing in hand, kept because it is what knows which pieces it shook loose.
 var _carried_wing: CarriedWing
 
@@ -51,11 +51,11 @@ func _ready() -> void:
 	_refresh_view()
 
 
-func lift_from_inventory(piece: Furniture) -> void:
+func lift_from_inventory(piece: BoardPiece) -> void:
 	if carry.is_carrying():
 		return
 	_inventory_piece = piece
-	carry.lift(CarriedFurniture.new(piece, piece.anchor, null), cursor.targeted_hex)
+	carry.lift(CarriedPiece.new(piece, piece.anchor, null), cursor.targeted_hex)
 	_announce_if_impossible(piece, piece.anchor)
 
 
@@ -67,12 +67,12 @@ func lift_under_cursor() -> void:
 	var origin := state.occupant_at(cursor.targeted_hex)
 	if origin == null:
 		return
-	var offsets := Footprint.offsets_for(origin.furniture.shape)
+	var offsets := Footprint.offsets_for(origin.piece.shape)
 	var grab_offset: Vector2i = offsets[origin.hexes.find(cursor.targeted_hex)]
 	_inventory_piece = null
 	_touch(origin.zone().coordinates())
-	carry.lift(CarriedFurniture.new(origin.furniture, grab_offset, origin), cursor.targeted_hex)
-	_announce_if_impossible(origin.furniture, grab_offset)
+	carry.lift(CarriedPiece.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
+	_announce_if_impossible(origin.piece, grab_offset)
 
 
 ## Hands the player a wing to site. A wing goes through the same carry furniture does, so there
@@ -164,7 +164,7 @@ func _is_target_press(event: InputEvent) -> bool:
 # The sweep is a function of the committed board, which cannot change during a carry, so it runs
 # once on lift and not per frame. The piece is already detached, so a lifted piece's own hexes
 # count as free.
-func _announce_if_impossible(piece: Furniture, grab_offset: Vector2i) -> void:
+func _announce_if_impossible(piece: BoardPiece, grab_offset: Vector2i) -> void:
 	var survey := PlacementRules.survey(piece, grab_offset, state)
 	if not survey.unsatisfiable.is_empty():
 		nothing_satisfies.emit(survey.unsatisfiable)
@@ -200,7 +200,7 @@ func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 
 
 func _on_placed() -> void:
-	var returned: Array[Furniture] = []
+	var returned: Array[BoardPiece] = []
 	if _carried_wing != null:
 		returned = _carried_wing.displaced
 	_on_carry_ended()
