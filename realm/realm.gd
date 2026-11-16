@@ -12,7 +12,7 @@ extends Node3D
 ## not exist yet (the inventory, adr/0011, and what buys a Swell), and `lift_from_inventory`,
 ## `swell`, `attach_wing` and `lift_wing_under_cursor` are the seams those will attach to.
 
-signal piece_returned(piece: Furniture)
+signal piece_returned(piece: BoardPiece)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
 ## the lift still happens.
 ## https://github.com/snackpackgames/cosmicparade/issues/62
@@ -67,12 +67,12 @@ func lift_under_cursor() -> void:
 	var origin := state.occupant_at(cursor.targeted_hex)
 	if origin == null:
 		return
-	var offsets := Footprint.offsets_for(origin.furniture.shape)
+	var offsets := Footprint.offsets_for(origin.piece.shape)
 	var grab_offset: Vector2i = offsets[origin.hexes.find(cursor.targeted_hex)]
 	_inventory_piece = null
 	_touch(origin.zone().coordinates())
-	carry.lift(CarriedFurniture.new(origin.furniture, grab_offset, origin), cursor.targeted_hex)
-	_announce_if_impossible(origin.furniture, grab_offset)
+	carry.lift(CarriedFurniture.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
+	_announce_if_impossible(origin.piece, grab_offset)
 
 
 ## Hands the player a wing to site. A wing goes through the same carry furniture does, so there
@@ -200,7 +200,7 @@ func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 
 
 func _on_placed() -> void:
-	var returned: Array[Furniture] = []
+	var returned: Array[BoardPiece] = []
 	if _carried_wing != null:
 		returned = _carried_wing.displaced
 	_on_carry_ended()

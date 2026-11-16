@@ -10,8 +10,8 @@ func _bench() -> Furniture:
 	return load("res://data/realm/furniture/fern_bench.tres")
 
 
-func _stool_at(hex: Vector2i) -> FurniturePlacement:
-	return FurniturePlacement.new(_stool(), 0, [hex] as Array[Vector2i])
+func _stool_at(hex: Vector2i) -> BoardPlacement:
+	return BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i])
 
 
 func _flank_the_centre_line_with_forest(state: RealmState) -> void:

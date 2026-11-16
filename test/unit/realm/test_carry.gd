@@ -65,7 +65,7 @@ func test_placing_an_allowed_target_commits_and_returns_to_idle() -> void:
 
 func test_cancel_returns_the_piece_to_its_origin_hex_and_orientation() -> void:
 	var state := RealmState.new(RealmGeometry.new())
-	var origin := FurniturePlacement.new(_stool(), 2, [Vector2i.ZERO] as Array[Vector2i])
+	var origin := BoardPlacement.new(_stool(), 2, [Vector2i.ZERO] as Array[Vector2i])
 	state.place(origin)
 	var carry := _carry(state)
 	carry.lift(CarriedFurniture.new(_stool(), Vector2i.ZERO, origin), Vector2i.ZERO)
@@ -79,7 +79,7 @@ func test_cancel_returns_the_piece_to_its_origin_hex_and_orientation() -> void:
 
 func test_a_carried_piece_occupies_nothing() -> void:
 	var state := RealmState.new(RealmGeometry.new())
-	var origin := FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
+	var origin := BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
 	state.place(origin)
 	var carry := _carry(state)
 	carry.lift(CarriedFurniture.new(_stool(), Vector2i.ZERO, origin), Vector2i.ZERO)
@@ -90,9 +90,9 @@ func test_a_carried_piece_occupies_nothing() -> void:
 func test_a_straight_three_can_shift_one_hex_along_its_own_axis() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/54
 	var state := RealmState.new(RealmGeometry.new())
-	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(0, 1)] as Array[Vector2i]))
+	state.place(BoardPlacement.new(_stool(), 0, [Vector2i(0, 1)] as Array[Vector2i]))
 	var hexes := Footprint.occupied(Footprint.Shape.STRAIGHT, 0, Vector2i.ZERO, Vector2i(1, 0))
-	var origin := FurniturePlacement.new(_bench(), 0, hexes)
+	var origin := BoardPlacement.new(_bench(), 0, hexes)
 	state.place(origin)
 	var carry := _carry(state)
 	carry.lift(CarriedFurniture.new(_bench(), Vector2i(1, 0), origin), Vector2i.ZERO)
@@ -105,7 +105,7 @@ func test_a_straight_three_can_shift_one_hex_along_its_own_axis() -> void:
 func test_rotating_in_place_does_not_collide_with_itself() -> void:
 	var state := RealmState.new(RealmGeometry.new())
 	var hexes := Footprint.occupied(Footprint.Shape.STRAIGHT, 0, Vector2i.ZERO, Vector2i(1, 0))
-	var origin := FurniturePlacement.new(_bench(), 0, hexes)
+	var origin := BoardPlacement.new(_bench(), 0, hexes)
 	state.place(origin)
 	var carry := _carry(state)
 	carry.lift(CarriedFurniture.new(_bench(), Vector2i(1, 0), origin), Vector2i.ZERO)
@@ -137,7 +137,7 @@ func test_a_piece_from_inventory_arrives_at_the_last_orientation_placed() -> voi
 
 func test_a_piece_lifted_from_the_board_keeps_its_own_orientation() -> void:
 	var state := RealmState.new(RealmGeometry.new())
-	var origin := FurniturePlacement.new(_stool(), 5, [Vector2i.ZERO] as Array[Vector2i])
+	var origin := BoardPlacement.new(_stool(), 5, [Vector2i.ZERO] as Array[Vector2i])
 	state.place(origin)
 	var carry := _carry(state)
 	carry.lift(CarriedFurniture.new(_stool(), Vector2i.ZERO, origin), Vector2i.ZERO)

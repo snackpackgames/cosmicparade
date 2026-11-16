@@ -17,7 +17,7 @@ var _material: ShaderMaterial
 
 
 func show_placements(
-	placements: Array[FurniturePlacement], zones: Array[InfluenceZone]
+	placements: Array[BoardPlacement], zones: Array[InfluenceZone]
 ) -> void:
 	for body: StaticBody3D in _bodies.values():
 		remove_child(body)
@@ -52,7 +52,7 @@ func clear_ghost() -> void:
 	_ghost = null
 
 
-func body_for(placement: FurniturePlacement) -> StaticBody3D:
+func body_for(placement: BoardPlacement) -> StaticBody3D:
 	return _bodies.get(placement)
 
 

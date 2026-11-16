@@ -8,10 +8,10 @@ const ORIENTATIONS := 6
 
 var furniture: Furniture
 var grab_offset: Vector2i
-var origin: FurniturePlacement
+var origin: BoardPlacement
 
 
-func _init(piece: Furniture, grabbed: Vector2i, lifted_from: FurniturePlacement) -> void:
+func _init(piece: Furniture, grabbed: Vector2i, lifted_from: BoardPlacement) -> void:
 	furniture = piece
 	grab_offset = grabbed
 	origin = lifted_from
@@ -43,7 +43,7 @@ func detach(state: RealmState) -> void:
 
 
 func commit(target: Vector2i, orientation: int, state: RealmState) -> void:
-	state.place(FurniturePlacement.new(furniture, orientation, hexes_at(target, orientation)))
+	state.place(BoardPlacement.new(furniture, orientation, hexes_at(target, orientation)))
 
 
 func restore(state: RealmState) -> void:

@@ -7,9 +7,11 @@ extends RefCounted
 ## https://github.com/snackpackgames/cosmicparade/issues/59
 
 var geometry: RealmGeometry
-var placements: Array[FurniturePlacement] = []
+var placements: Array[BoardPlacement] = []
 
-# Which piece stands on a hex, keyed by hex. Footprints never overlap, so one piece per hex.
+# Which piece stands on a hex, keyed by hex. One index over furniture, shrines and the Altar
+# alike: footprints never overlap is one rule, not three.
+# https://github.com/snackpackgames/cosmicparade/issues/51
 var _occupants: Dictionary = {}
 
 
@@ -17,26 +19,32 @@ func _init(realm_geometry: RealmGeometry) -> void:
 	geometry = realm_geometry
 
 
-## One zone per placement, derived afresh. Never stored.
+## One zone per placement that projects one, derived afresh. Never stored. A piece that
+## projects nothing is absent from the tally rather than a zero entry in it — #37's depth rule
+## counts zones, so an empty entry would be miscounted as coverage.
+## https://github.com/snackpackgames/cosmicparade/issues/37
+## https://github.com/snackpackgames/cosmicparade/issues/75
 func zones() -> Array[InfluenceZone]:
 	var result: Array[InfluenceZone] = []
 	for placement in placements:
-		result.append(placement.zone())
+		var zone := placement.zone()
+		if zone != null:
+			result.append(zone)
 	return result
 
 
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.
-func occupant_at(hex: Vector2i) -> FurniturePlacement:
+func occupant_at(hex: Vector2i) -> BoardPlacement:
 	return _occupants.get(hex)
 
 
-func place(placement: FurniturePlacement) -> void:
+func place(placement: BoardPlacement) -> void:
 	placements.append(placement)
 	for hex in placement.hexes:
 		_occupants[hex] = placement
 
 
-func remove(placement: FurniturePlacement) -> void:
+func remove(placement: BoardPlacement) -> void:
 	placements.erase(placement)
 	for hex in placement.hexes:
 		if _occupants.get(hex) == placement:
@@ -44,9 +52,9 @@ func remove(placement: FurniturePlacement) -> void:
 
 
 ## The pieces that lie wholly inside the given hexes.
-func placements_within(hexes: Array[Vector2i]) -> Array[FurniturePlacement]:
+func placements_within(hexes: Array[Vector2i]) -> Array[BoardPlacement]:
 	var wanted := _as_set(hexes)
-	var result: Array[FurniturePlacement] = []
+	var result: Array[BoardPlacement] = []
 	for placement in placements:
 		var inside := true
 		for hex in placement.hexes:
@@ -57,9 +65,9 @@ func placements_within(hexes: Array[Vector2i]) -> Array[FurniturePlacement]:
 
 
 ## The pieces that overlap the given hexes at all.
-func placements_touching(hexes: Array[Vector2i]) -> Array[FurniturePlacement]:
+func placements_touching(hexes: Array[Vector2i]) -> Array[BoardPlacement]:
 	var wanted := _as_set(hexes)
-	var result: Array[FurniturePlacement] = []
+	var result: Array[BoardPlacement] = []
 	for placement in placements:
 		for hex in placement.hexes:
 			if wanted.has(hex):

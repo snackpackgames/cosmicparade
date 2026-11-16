@@ -6,8 +6,8 @@ func _stool() -> Furniture:
 	return load("res://data/realm/furniture/mushroom_stool.tres")
 
 
-func _stool_placement() -> FurniturePlacement:
-	return FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
+func _stool_placement() -> BoardPlacement:
+	return BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
 
 
 func test_it_builds_one_body_per_placement() -> void:
@@ -42,7 +42,7 @@ func test_showing_a_new_set_of_placements_drops_the_old_bodies() -> void:
 	var view: FurnitureView = add_child_autofree(FurnitureView.new())
 	var placement := _stool_placement()
 	view.show_placements([placement], [] as Array[InfluenceZone])
-	view.show_placements([] as Array[FurniturePlacement], [] as Array[InfluenceZone])
+	view.show_placements([] as Array[BoardPlacement], [] as Array[InfluenceZone])
 	await wait_frames(1)
 	assert_null(view.body_for(placement))
 	assert_eq(view.get_child_count(), 0)

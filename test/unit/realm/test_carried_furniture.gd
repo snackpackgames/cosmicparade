@@ -24,7 +24,7 @@ func test_furniture_always_offers_six_orientations() -> void:
 
 func test_detaching_a_piece_lifted_from_the_board_vacates_its_hexes() -> void:
 	var state := RealmState.new(RealmGeometry.new())
-	var origin := FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
+	var origin := BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i])
 	state.place(origin)
 	CarriedFurniture.new(_stool(), Vector2i.ZERO, origin).detach(state)
 	assert_null(state.occupant_at(Vector2i.ZERO))
@@ -33,7 +33,7 @@ func test_detaching_a_piece_lifted_from_the_board_vacates_its_hexes() -> void:
 
 func test_restoring_puts_the_origin_placement_back_unchanged() -> void:
 	var state := RealmState.new(RealmGeometry.new())
-	var origin := FurniturePlacement.new(_stool(), 3, [Vector2i.ZERO] as Array[Vector2i])
+	var origin := BoardPlacement.new(_stool(), 3, [Vector2i.ZERO] as Array[Vector2i])
 	state.place(origin)
 	var carried := CarriedFurniture.new(_stool(), Vector2i.ZERO, origin)
 	carried.detach(state)

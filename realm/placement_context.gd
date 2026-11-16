@@ -38,5 +38,5 @@ func zone_count(domain: Domain.Kind, hex: Vector2i) -> int:
 	return count
 
 
-func occupant_at(hex: Vector2i) -> FurniturePlacement:
+func occupant_at(hex: Vector2i) -> BoardPlacement:
 	return state.occupant_at(hex)

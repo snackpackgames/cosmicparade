@@ -16,15 +16,15 @@ var grab_offset: Vector2i
 var origin_index: int
 ## The pieces lifted off because they straddled the seam, in the order they were found. Returning
 ## them costs nothing: https://github.com/snackpackgames/cosmicparade/issues/53
-var displaced: Array[Furniture] = []
+var displaced: Array[BoardPiece] = []
 
 var _origin_anchor := Vector2i.ZERO
 var _origin_steps := 0
 # Where the anchor sits relative to the grab hex, in the shape's own unrotated frame, so a
 # rotation in hand pivots on the grab hex the way a turning piece does.
 var _anchor_offset := Vector2i.ZERO
-var _travelling: Array[FurniturePlacement] = []
-var _straddling: Array[FurniturePlacement] = []
+var _travelling: Array[BoardPlacement] = []
+var _straddling: Array[BoardPlacement] = []
 var _detached := false
 
 
@@ -75,7 +75,7 @@ func detach(state: RealmState) -> void:
 	for placement in state.placements_touching(wing_hexes):
 		if not _travelling.has(placement):
 			_straddling.append(placement)
-			displaced.append(placement.furniture)
+			displaced.append(placement.piece)
 	for placement in _travelling:
 		state.remove(placement)
 	for placement in _straddling:
@@ -121,11 +121,11 @@ func _anchor_at(target: Vector2i, orientation: int) -> Vector2i:
 # The same offsets relative to the wing, read in the shape's unrotated frame and laid down again
 # in the new one: the ground turned, so what stands on it turns with it.
 func _carried_along(
-	placement: FurniturePlacement, anchor: Vector2i, orientation: int
-) -> FurniturePlacement:
+	placement: BoardPlacement, anchor: Vector2i, orientation: int
+) -> BoardPlacement:
 	var hexes: Array[Vector2i] = []
 	for hex in placement.hexes:
 		var canonical := HexCoordinates.rotate(hex - _origin_anchor, -_origin_steps)
 		hexes.append(anchor + HexCoordinates.rotate(canonical, orientation))
 	var turned := posmod(placement.orientation + orientation - _origin_steps, 6)
-	return FurniturePlacement.new(placement.furniture, turned, hexes)
+	return BoardPlacement.new(placement.piece, turned, hexes)

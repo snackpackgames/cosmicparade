@@ -14,8 +14,8 @@ func _bench() -> Furniture:
 	return load("res://data/realm/furniture/fern_bench.tres")
 
 
-func _stool_at(hex: Vector2i) -> FurniturePlacement:
-	return FurniturePlacement.new(_stool(), 0, [hex] as Array[Vector2i])
+func _stool_at(hex: Vector2i) -> BoardPlacement:
+	return BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i])
 
 
 # Two Forest stools whose radius-1 discs together cover the line (-1,0) (0,0) (1,0),

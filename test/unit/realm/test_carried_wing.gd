@@ -82,7 +82,7 @@ func test_a_wing_carries_the_furniture_standing_wholly_on_it() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/53
 	var parts := _board_with_a_wing()
 	var state: RealmState = parts[1]
-	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
+	state.place(BoardPlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
 	var carried := CarriedWing.new(_disc(), Vector2i(7, -1), 0)
 	carried.detach(state)
 	assert_null(state.occupant_at(Vector2i(7, -1)))
@@ -95,7 +95,7 @@ func test_a_piece_straddling_the_seam_is_returned_to_the_player() -> void:
 	var parts := _board_with_a_wing()
 	var state: RealmState = parts[1]
 	var hexes := Footprint.occupied(Footprint.Shape.PAIR, 0, Vector2i(6, -1), Vector2i(1, 0))
-	state.place(FurniturePlacement.new(_bench(), 0, hexes))
+	state.place(BoardPlacement.new(_bench(), 0, hexes))
 	var carried := CarriedWing.new(_disc(), Vector2i(7, -1), 0)
 	carried.detach(state)
 	carried.commit(Vector2i(1, 6), 0, state)
@@ -126,8 +126,8 @@ func test_cancelling_puts_the_wing_and_everything_on_it_back() -> void:
 	var parts := _board_with_a_wing()
 	var geometry: RealmGeometry = parts[0]
 	var state: RealmState = parts[1]
-	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
-	var straddler := FurniturePlacement.new(
+	state.place(BoardPlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
+	var straddler := BoardPlacement.new(
 		_bench(), 0, Footprint.occupied(Footprint.Shape.PAIR, 0, Vector2i(6, -1), Vector2i(1, 0))
 	)
 	state.place(straddler)
@@ -151,7 +151,7 @@ func test_a_lift_that_would_orphan_the_board_leaves_everything_alone() -> void:
 	geometry.attach(_disc(), 0, Vector2i(7, -1))
 	geometry.attach(_disc(), 0, Vector2i(10, -2))
 	var state := RealmState.new(geometry)
-	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
+	state.place(BoardPlacement.new(_stool(), 0, [Vector2i(7, -1)] as Array[Vector2i]))
 	assert_false(geometry.can_lift_wing(0), "the outer wing hangs off this one")
 	CarriedWing.new(_disc(), Vector2i(7, -1), 0).detach(state)
 	assert_eq(geometry.hexes().size(), 105, "the board is untouched")
@@ -168,7 +168,7 @@ func test_a_wing_turned_in_hand_turns_what_stands_on_it() -> void:
 	var triangle := _triangle()
 	geometry.attach(triangle, 0, Vector2i(6, 0))
 	var state := RealmState.new(geometry)
-	state.place(FurniturePlacement.new(_stool(), 0, [Vector2i(8, 0)] as Array[Vector2i]))
+	state.place(BoardPlacement.new(_stool(), 0, [Vector2i(8, 0)] as Array[Vector2i]))
 	var carried := CarriedWing.new(triangle, Vector2i(6, 0), 0)
 	carried.detach(state)
 	carried.commit(Vector2i(6, 0), 1, state)
@@ -186,7 +186,7 @@ func test_a_wing_landing_beside_a_rim_piece_leaves_it_exactly_where_it_is() -> v
 	geometry.swell()
 	var state := RealmState.new(geometry)
 	var stone: Furniture = load("res://data/realm/furniture/standing_stone.tres")
-	var placement := FurniturePlacement.new(stone, 0, [Vector2i(5, 0)] as Array[Vector2i])
+	var placement := BoardPlacement.new(stone, 0, [Vector2i(5, 0)] as Array[Vector2i])
 	state.place(placement)
 	assert_true(geometry.is_edge_hex(Vector2i(5, 0)), "placed on the rim under require_edge")
 	geometry.attach(_disc(), 0, Vector2i(7, -1))

@@ -48,7 +48,7 @@ func test_the_scene_boots_with_a_board_a_cursor_and_a_carry() -> void:
 func test_aiming_while_carrying_previews_the_ground_the_target_would_make() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/31
 	var realm := await _realm()
-	realm.state.place(FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
+	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm.lift_from_inventory(_stool())
 	realm.carry.aim(Vector2i(1, 0))
 	assert_gt(
@@ -60,7 +60,7 @@ func test_aiming_while_carrying_previews_the_ground_the_target_would_make() -> v
 func test_the_preview_resolves_on_a_refused_target_too() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/62 -- one read path.
 	var realm := await _realm()
-	realm.state.place(FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
+	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm.lift_from_inventory(_stool())
 	realm.carry.aim(Vector2i.ZERO)
 	assert_false(realm.carry.verdict().allowed, "that hex is occupied")
@@ -69,7 +69,7 @@ func test_the_preview_resolves_on_a_refused_target_too() -> void:
 
 func test_cancelling_puts_the_previewed_ground_back() -> void:
 	var realm := await _realm()
-	realm.state.place(FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
+	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm.lift_from_inventory(_stool())
 	realm.carry.aim(Vector2i(1, 0))
 	realm.carry.cancel()
@@ -87,7 +87,7 @@ func test_cancelling_a_piece_from_inventory_returns_it() -> void:
 func test_lifting_a_placed_piece_drops_the_ground_it_was_holding_up() -> void:
 	var realm := await _realm()
 	for hex: Vector2i in [Vector2i.ZERO, Vector2i(1, 0)] as Array[Vector2i]:
-		realm.state.place(FurniturePlacement.new(_stool(), 0, [hex] as Array[Vector2i]))
+		realm.state.place(BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i]))
 	realm._refresh_view()
 	realm.board.zones = realm.state.zones()
 	realm.board.rebuild(realm.state.geometry.hexes())
@@ -102,7 +102,7 @@ func test_lifting_a_placed_piece_drops_the_ground_it_was_holding_up() -> void:
 
 func test_placing_commits_the_piece_and_the_ground_it_raised() -> void:
 	var realm := await _realm()
-	realm.state.place(FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
+	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm.lift_from_inventory(_stool())
 	realm.carry.aim(Vector2i(1, 0))
 	assert_true(realm.carry.place())
@@ -112,7 +112,7 @@ func test_placing_commits_the_piece_and_the_ground_it_raised() -> void:
 
 func test_rotating_while_idle_over_a_piece_lifts_it_turned() -> void:
 	var realm := await _realm()
-	realm.state.place(FurniturePlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
+	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm._rotate()
 	assert_true(realm.carry.is_carrying())
 	assert_eq(realm.carry.orientation, 1)
@@ -137,7 +137,7 @@ func test_a_swell_raises_ground_under_influence_that_was_spilling_into_nothing()
 	# into the space it just gained, with nothing newly placed.
 	var realm := await _realm()
 	for hex: Vector2i in [Vector2i(3, 0), Vector2i(3, -1)] as Array[Vector2i]:
-		realm.state.place(FurniturePlacement.new(_stool(), 0, [hex] as Array[Vector2i]))
+		realm.state.place(BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i]))
 	realm.swell()
 	await wait_frames(1)
 	assert_gt(
@@ -238,7 +238,7 @@ func test_lifting_a_wing_takes_its_spaces_off_the_board_for_the_carry() -> void:
 func test_a_piece_straddling_a_relocated_wing_is_announced_as_returned() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/53
 	var realm := await _wing_on_the_board()
-	realm.state.place(FurniturePlacement.new(
+	realm.state.place(BoardPlacement.new(
 		_bench(), 0,
 		Footprint.occupied(Footprint.Shape.STRAIGHT, 0, Vector2i(6, -1), Vector2i(1, 0))
 	))

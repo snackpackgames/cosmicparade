@@ -1,9 +1,9 @@
 extends GutTest
 
 
-func _stool_at(hex: Vector2i) -> FurniturePlacement:
+func _stool_at(hex: Vector2i) -> BoardPlacement:
 	var stool: Furniture = load("res://data/realm/furniture/mushroom_stool.tres")
-	return FurniturePlacement.new(stool, 0, [hex] as Array[Vector2i])
+	return BoardPlacement.new(stool, 0, [hex] as Array[Vector2i])
 
 
 func _context(occupied: Array[Vector2i], state: RealmState) -> PlacementContext:
