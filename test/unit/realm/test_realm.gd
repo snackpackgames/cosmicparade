@@ -12,8 +12,24 @@ func _bench() -> Furniture:
 	return load("res://data/realm/furniture/fern_bench.tres")
 
 
+func _disc() -> WingShape:
+	return load("res://data/realm/wing_shape/disc.tres")
+
+
 func _realm() -> Realm:
 	var realm: Realm = add_child_autofree(REALM_SCENE.instantiate())
+	await wait_frames(1)
+	return realm
+
+
+## A radius-5 core with a disc wing anchored at (7, -1): 98 spaces, the wing's index 0.
+func _wing_on_the_board() -> Realm:
+	var realm := await _realm()
+	realm.swell()
+	realm.swell()
+	realm.attach_wing(_disc())
+	realm.carry.aim(Vector2i(7, -1))
+	realm.carry.place()
 	await wait_frames(1)
 	return realm
 
@@ -182,3 +198,63 @@ func test_lifting_a_placeable_piece_announces_nothing() -> void:
 	watch_signals(realm)
 	realm.lift_from_inventory(_stool())
 	assert_signal_not_emitted(realm, "nothing_satisfies")
+
+
+func test_attaching_a_wing_goes_through_the_same_carry() -> void:
+	var realm := await _realm()
+	realm.swell()
+	realm.swell()
+	realm.attach_wing(_disc())
+	assert_true(realm.carry.is_carrying())
+	realm.carry.aim(Vector2i(7, -1))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+	assert_eq(realm.state.geometry.hexes().size(), 98)
+	assert_eq(realm.get_node("RealmBoard").get_child_count(), 98)
+
+
+func test_cancelling_a_wing_attachment_leaves_the_board_as_it_was() -> void:
+	var realm := await _realm()
+	realm.swell()
+	realm.swell()
+	realm.attach_wing(_disc())
+	realm.carry.aim(Vector2i(7, -1))
+	realm.carry.cancel()
+	await wait_frames(1)
+	assert_eq(realm.state.geometry.hexes().size(), 91)
+
+
+func test_lifting_a_wing_takes_its_spaces_off_the_board_for_the_carry() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/54 -- a carried thing
+	# occupies nothing, and a wing is ground, so the ground goes with it.
+	var realm := await _wing_on_the_board()
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+	await wait_frames(1)
+	assert_true(realm.carry.is_carrying())
+	assert_eq(realm.get_node("RealmBoard").get_child_count(), 91)
+
+
+func test_a_piece_straddling_a_relocated_wing_is_announced_as_returned() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/53
+	var realm := await _wing_on_the_board()
+	realm.state.place(FurniturePlacement.new(
+		_bench(), 0,
+		Footprint.occupied(Footprint.Shape.STRAIGHT, 0, Vector2i(6, -1), Vector2i(1, 0))
+	))
+	watch_signals(realm)
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+	realm.carry.aim(Vector2i(1, 6))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+	assert_signal_emitted(realm, "piece_returned")
+	assert_eq(realm.state.geometry.hexes().size(), 98, "no hexes were lost")
+
+
+func test_a_wing_whose_lift_would_orphan_the_board_is_not_lifted() -> void:
+	var realm := await _wing_on_the_board()
+	realm.state.geometry.attach(_disc(), 0, Vector2i(10, -2))
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+	assert_false(realm.carry.is_carrying())

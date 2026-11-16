@@ -7,9 +7,10 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/31
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
-## DEBUG ONLY: F8 lifts a placeholder stool from "inventory" and F9 swells the board. Both stand
-## in for systems that do not exist yet (the inventory, adr/0011, and what buys a Swell), and
-## `lift_from_inventory` and `swell` are the seams those will attach to.
+## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 swells the board, F10 hands the
+## player a wing to site and F11 lifts the wing under the cursor. All stand in for systems that do
+## not exist yet (the inventory, adr/0011, and what buys a Swell), and `lift_from_inventory`,
+## `swell`, `attach_wing` and `lift_wing_under_cursor` are the seams those will attach to.
 
 signal piece_returned(piece: Furniture)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
@@ -18,6 +19,7 @@ signal piece_returned(piece: Furniture)
 signal nothing_satisfies(criteria: Array[PlacementCriterion])
 
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
+const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
 
 var state := RealmState.new(RealmGeometry.new())
 
@@ -25,6 +27,8 @@ var state := RealmState.new(RealmGeometry.new())
 # exactly what it disturbed.
 var _touched: Dictionary = {}
 var _inventory_piece: Furniture
+# The wing in hand, kept because it is what knows which pieces it shook loose.
+var _carried_wing: CarriedWing
 
 @onready var board: RealmBoard = $RealmBoard
 @onready var cursor: HexCursor = $HexCursor
@@ -41,7 +45,7 @@ func _ready() -> void:
 	carry.configure(state)
 	carry.lifted.connect(_on_lifted)
 	carry.aimed.connect(_on_aimed)
-	carry.placed.connect(_on_carry_ended.unbind(1))
+	carry.placed.connect(_on_placed.unbind(1))
 	carry.cancelled.connect(_on_cancelled)
 	cursor.targeted_hex_changed.connect(carry.aim)
 	_refresh_view()
@@ -69,6 +73,38 @@ func lift_under_cursor() -> void:
 	_touch(origin.zone().coordinates())
 	carry.lift(CarriedFurniture.new(origin.furniture, grab_offset, origin), cursor.targeted_hex)
 	_announce_if_impossible(origin.furniture, grab_offset)
+
+
+## Hands the player a wing to site. A wing goes through the same carry furniture does, so there
+## is no second verb here: only a different thing in hand.
+## https://github.com/snackpackgames/cosmicparade/issues/54
+func attach_wing(shape: WingShape) -> void:
+	if carry.is_carrying():
+		return
+	_inventory_piece = null
+	_carried_wing = CarriedWing.new(shape, Vector2i.ZERO, -1)
+	carry.lift(_carried_wing, cursor.targeted_hex)
+
+
+## Lifts the wing under the cursor, with its contents. Refused outright when the lift would leave
+## the board in two patches, because wings chain and `adr/0001`'s rock is one object.
+func lift_wing_under_cursor() -> void:
+	if carry.is_carrying():
+		return
+	var index := state.geometry.wing_index_at(cursor.targeted_hex)
+	if index < 0 or not state.geometry.can_lift_wing(index):
+		return
+	var wing := state.geometry.wings[index]
+	# What the wing is about to take away stops holding up ground, so the hexes its pieces
+	# covered need rebuilding whether or not the wing lands back near them.
+	for placement in state.placements_touching(wing.hexes()):
+		_touch(placement.zone().coordinates())
+	_inventory_piece = null
+	_carried_wing = CarriedWing.new(wing.shape, cursor.targeted_hex, index)
+	carry.lift(_carried_wing, cursor.targeted_hex)
+	board.zones = state.zones()
+	board.set_hexes(state.geometry.hexes())
+	_rebuild_touched()
 
 
 ## Grows the board one step and floods the new ground with the influence already spilling into it.
@@ -141,15 +177,20 @@ func _on_lifted(carried: Carried) -> void:
 
 
 func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
-	var candidate := carry.carried.zone_at(carry.target, carry.orientation)
-	_touch(candidate.coordinates())
 	var zones := state.zones()
-	zones.append(candidate)
+	var candidate := carry.carried.zone_at(carry.target, carry.orientation)
+	if candidate == null:
+		# A wing projects nothing, so there is no candidate zone to compose in and nothing to
+		# spill past the rim: it is ground, and the ground it would add is drawn on carry end.
+		spill.clear()
+	else:
+		_touch(candidate.coordinates())
+		zones.append(candidate)
+		spill.show_spill(candidate, state.geometry)
 	board.zones = zones
 	_rebuild_touched()
 	view.show_placements(state.placements, zones)
 	view.show_ghost(hexes, verdict.allowed, zones)
-	spill.show_spill(candidate, state.geometry)
 	if verdict.allowed:
 		refusal.clear()
 		requirements.mark_failing([] as Array[PlacementCriterion])
@@ -158,9 +199,25 @@ func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 		requirements.mark_failing(verdict.failing_criteria)
 
 
+func _on_placed() -> void:
+	var returned: Array[Furniture] = []
+	if _carried_wing != null:
+		returned = _carried_wing.displaced
+	_on_carry_ended()
+	for piece in returned:
+		piece_returned.emit(piece)
+
+
 func _on_carry_ended() -> void:
 	_inventory_piece = null
+	if _carried_wing != null:
+		# A wing move changes the board's extent and takes its furniture with it, so every zone
+		# may have moved; the spaces themselves are reconciled from the geometry.
+		for placement in state.placements:
+			_touch(placement.zone().coordinates())
+		_carried_wing = null
 	board.zones = state.zones()
+	board.set_hexes(state.geometry.hexes())
 	_rebuild_touched()
 	_touched.clear()
 	view.clear_ghost()
