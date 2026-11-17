@@ -63,6 +63,8 @@ gh project item-edit --project-id <PROJECT_ID> --id "$item_id" \
   --field-id <STATUS_FIELD_ID> --single-select-option-id <IN_PROGRESS_OPTION_ID>
 ```
 
+To reconcile the whole board against GitHub after a merge — closed issues and merged PRs left on a stale Status, and PRs a cloud session could not add at all — run `bash scripts/reconcile-board.sh` (add `--apply` to write). See [Merge housekeeping](documentation/agents/afk-pipeline.md#merge-housekeeping).
+
 If a board's built-in auto-add workflow is enabled, it usually adds new PRs on its own with Status `Backlog`, so the step that is always needed is setting Status. Adding the PR to the project yourself is only a fallback: if it fails with `Content already exists in this project`, auto-add already did it.
 
 To find the source milestone: `gh issue view <issue> --json milestone,labels,projectItems`. The `gh project` commands need the `project` token scope; if they fail, run `gh auth refresh -s project`.
