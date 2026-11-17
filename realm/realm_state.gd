@@ -15,6 +15,11 @@ var placements: Array[BoardPlacement] = []
 ## https://github.com/snackpackgames/cosmicparade/issues/74
 var shrine_capacity: int = STARTING_SHRINE_CAPACITY
 
+## The Altar's placement, once stood. There is no stock entry for it, so a carry can only end in
+## a placement or a cancel: "every realm has one" holds by that absence, not by a guard.
+## https://github.com/snackpackgames/cosmicparade/issues/77
+var altar_placement: BoardPlacement
+
 # Which piece stands on a hex, keyed by hex. One index over furniture, shrines and the Altar
 # alike: footprints never overlap is one rule, not three.
 # https://github.com/snackpackgames/cosmicparade/issues/51
@@ -64,6 +69,27 @@ func shrine_placements() -> Array[ShrinePlacement]:
 ## https://github.com/snackpackgames/cosmicparade/issues/74
 func shrines_in_stock() -> int:
 	return shrine_capacity - shrine_placements().size()
+
+
+## Stands the Altar on the origin in its default orientation, which exists at every core radius
+## and after every wing, so no coordinate is authored.
+## https://github.com/snackpackgames/cosmicparade/issues/53
+## https://github.com/snackpackgames/cosmicparade/issues/77
+func place_altar(altar: Altar) -> BoardPlacement:
+	var hexes := Footprint.occupied(altar.shape, 0, Vector2i.ZERO, altar.anchor)
+	altar_placement = BoardPlacement.new(altar, 0, hexes)
+	place(altar_placement)
+	return altar_placement
+
+
+## What the Altar reads from the shrines reaching it, derived afresh and never stored. Empty when
+## no Altar stands.
+## https://github.com/snackpackgames/cosmicparade/issues/79
+func altar_reading() -> AltarReading:
+	var hexes: Array[Vector2i] = []
+	if altar_placement != null:
+		hexes = altar_placement.hexes
+	return AltarReading.of(hexes, shrine_zones())
 
 
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.

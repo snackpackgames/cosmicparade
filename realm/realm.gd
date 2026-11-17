@@ -22,6 +22,7 @@ signal nothing_satisfies(criteria: Array[PlacementCriterion])
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
 const STOCK_SHRINE := preload("res://data/realm/shrine/plain_shrine.tres")
 const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
+const ALTAR := preload("res://data/realm/altar/altar.tres")
 
 var state := RealmState.new(RealmGeometry.new())
 
@@ -43,6 +44,7 @@ var _carried_wing: CarriedWing
 
 
 func _ready() -> void:
+	state.place_altar(ALTAR)
 	board.build(state.geometry.hexes())
 	carry.configure(state)
 	carry.lifted.connect(_on_lifted)

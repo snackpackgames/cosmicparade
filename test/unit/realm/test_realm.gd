@@ -22,6 +22,13 @@ func _realm() -> Realm:
 	return realm
 
 
+# The scene stands its Altar on the origin; tests that need the origin bare take it off.
+func _bare_realm() -> Realm:
+	var realm := await _realm()
+	realm.state.remove(realm.state.altar_placement)
+	return realm
+
+
 ## A radius-5 core with a disc wing anchored at (7, -1): 98 spaces, the wing's index 0.
 func _wing_on_the_board() -> Realm:
 	var realm := await _realm()
@@ -101,7 +108,7 @@ func test_lifting_a_placed_piece_drops_the_ground_it_was_holding_up() -> void:
 
 
 func test_placing_commits_the_piece_and_the_ground_it_raised() -> void:
-	var realm := await _realm()
+	var realm := await _bare_realm()
 	realm.state.place(BoardPlacement.new(_stool(), 0, [Vector2i.ZERO] as Array[Vector2i]))
 	realm.lift_from_inventory(_stool())
 	realm.carry.aim(Vector2i(1, 0))
@@ -119,7 +126,7 @@ func test_rotating_while_idle_over_a_piece_lifts_it_turned() -> void:
 
 
 func test_rotating_while_idle_over_bare_ground_does_nothing() -> void:
-	var realm := await _realm()
+	var realm := await _bare_realm()
 	realm._rotate()
 	assert_false(realm.carry.is_carrying())
 
@@ -152,14 +159,14 @@ func test_the_realm_scene_is_still_not_the_main_scene() -> void:
 
 
 func test_the_board_says_nothing_until_a_target_fails() -> void:
-	var realm := await _realm()
+	var realm := await _bare_realm()
 	realm.lift_from_inventory(_stool())
 	assert_eq(realm.refusal.marked_hexes(), [] as Array[Vector2i])
 	assert_eq(realm.requirements.lines(), [])
 
 
 func test_a_refusal_marks_the_hexes_and_the_requirements_at_once() -> void:
-	var realm := await _realm()
+	var realm := await _bare_realm()
 	realm.lift_from_inventory(_bench())
 	realm.carry.aim(Vector2i.ZERO)
 	assert_eq(realm.refusal.marked_hexes().size(), 3)
@@ -275,7 +282,7 @@ func test_lifting_from_an_empty_stock_does_nothing() -> void:
 	realm.lift_from_stock()
 
 	assert_false(realm.carry.is_carrying())
-	assert_eq(realm.state.placements.size(), 2)
+	assert_eq(realm.state.placements.size(), 3, "the Altar and the two shrines")
 
 
 func test_a_shrine_lifted_from_stock_lands_as_a_shrine_placement() -> void:
@@ -294,3 +301,27 @@ func test_a_shrine_placed_from_stock_arrives_with_an_empty_vessel() -> void:
 	realm.lift_from_stock()
 	realm.carry.place()
 	assert_eq(realm.state.shrine_zones().size(), 0)
+
+
+func test_the_altar_can_be_lifted_and_cancelled_back() -> void:
+	var realm := await _realm()
+	realm.cursor.aim_at(Vector2i.ZERO)
+	realm.lift_under_cursor()
+	assert_true(realm.carry.is_carrying())
+	assert_null(realm.state.occupant_at(Vector2i.ZERO))
+
+	realm.carry.cancel()
+
+	assert_not_null(realm.state.occupant_at(Vector2i.ZERO))
+	assert_eq(realm.state.altar_placement.hexes.size(), 3)
+
+
+func test_there_is_no_way_to_stow_the_altar() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/77 — "must have one" is
+	# enforced by the absence of a destination, not by a check.
+	var realm := await _realm()
+	assert_eq(realm.state.shrines_in_stock(), 2)
+	realm.cursor.aim_at(Vector2i.ZERO)
+	realm.lift_under_cursor()
+	realm.carry.cancel()
+	assert_eq(realm.state.shrines_in_stock(), 2)

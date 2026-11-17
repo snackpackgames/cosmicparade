@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="Altar" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://realm/altar.gd" id="1_altar"]
+[ext_resource type="Script" path="res://realm/placement_criterion.gd" id="2_crit"]
+[ext_resource type="Script" path="res://realm/level_footprint_criterion.gd" id="2_level"]
+
+[sub_resource type="Resource" id="2_level_inst"]
+script = ExtResource("2_level")
+
+[resource]
+script = ExtResource("1_altar")
+piece_name = "Altar"
+shape = 4
+anchor = Vector2i(0, 0)
+criteria = Array[ExtResource("2_crit")]([SubResource("2_level_inst")])

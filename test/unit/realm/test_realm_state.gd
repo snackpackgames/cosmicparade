@@ -157,3 +157,25 @@ func test_lifting_a_shrine_off_the_board_puts_it_back_in_stock() -> void:
 	var shrine := _place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
 	state.remove(shrine)
 	assert_eq(state.shrines_in_stock(), 2)
+
+
+func _altar() -> Altar:
+	var altar := Altar.new()
+	altar.piece_name = "test altar"
+	altar.shape = Footprint.Shape.TRIANGLE
+	altar.criteria = [LevelFootprintCriterion.new()] as Array[PlacementCriterion]
+	return altar
+
+
+func test_a_new_realm_stands_its_altar_on_the_origin() -> void:
+	var state := _state()
+	state.place_altar(_altar())
+	for hex: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, -1)]:
+		assert_not_null(state.occupant_at(hex))
+	assert_eq(state.altar_placement.hexes.size(), 3)
+
+
+func test_the_altar_contributes_no_zone() -> void:
+	var state := _state()
+	state.place_altar(_altar())
+	assert_eq(state.zones().size(), 0)
