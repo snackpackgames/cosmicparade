@@ -124,3 +124,29 @@ An open PR referencing the issue, or carrying a branch named for it, means the i
 **Merging is what opens the window.** Closing an issue unblocks the next in the chain, and the routine fires three times a day (07:55, 15:55, 23:55 ET). The gap between a merge and the next fire is exactly when an interactive session is most likely to pick up work the routine is about to take, or has just taken.
 
 This is not hypothetical. Issue #88 was implemented twice: by the routine as [#96](https://github.com/snackpackgames/cosmicparade/pull/96) at 20:58Z on 2026-11-16, and again interactively as [#97](https://github.com/snackpackgames/cosmicparade/pull/97) at 23:15Z, because the second session never listed open PRs. #96 merged; #97 had to be reduced to the small remainder that was genuinely new. The routine's guard held throughout — only the interactive path lacked one.
+
+## Merge housekeeping
+
+After a pipeline PR merges, reconcile the board:
+
+```bash
+bash scripts/reconcile-board.sh           # what would change
+bash scripts/reconcile-board.sh --apply   # change it
+```
+
+**This is not optional tidying — the board cannot stay correct without it.** A cloud session reaches GitHub through a proxy that refuses GraphQL, and Projects v2 is GraphQL-only, so the routine can neither add its PR to the board nor set any Status. Every PR it opens is therefore missing from the board until someone places it, and every issue it closes keeps whatever Status it had when it was filed. The routine's own prompt ends by naming the items a human still needs to add, and this script is how that gets done.
+
+The script corrects only unambiguous drift, so it is safe to run at any time:
+
+| Observed | Set to |
+|---|---|
+| Closed issue, or merged/closed PR, not `Done` | `Done` |
+| Open issue with open `blocked_by` edges, not `Blocked` | `Blocked` |
+| Open issue, no open blockers, currently `Blocked` | `Todo` |
+| PR merged within the last 7 days, absent from the board | added, `Done` |
+
+It never touches an open PR — `In Progress` is the convention there, and nothing in the tracker distinguishes "awaiting review" from "still being written". An open, unblocked issue already in `Todo` or `In Progress` is left alone too, since only `Blocked` is provably wrong for it.
+
+The seven-day window on added PRs is deliberate: the board has never held most of the pre-pipeline history, and backfilling it would bury the live work. Pass `--days N` to place an older merge.
+
+Project, field and option ids are resolved fresh on every run rather than hardcoded, because `CONTRIBUTING.md` is right that they are not stable — and a stale id writes to the wrong field instead of failing loudly.
