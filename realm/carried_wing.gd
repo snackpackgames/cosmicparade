@@ -128,4 +128,4 @@ func _carried_along(
 		var canonical := HexCoordinates.rotate(hex - _origin_anchor, -_origin_steps)
 		hexes.append(anchor + HexCoordinates.rotate(canonical, orientation))
 	var turned := posmod(placement.orientation + orientation - _origin_steps, 6)
-	return BoardPlacement.new(placement.piece, turned, hexes)
+	return placement.relocated(turned, hexes)

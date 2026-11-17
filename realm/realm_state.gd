@@ -6,8 +6,14 @@ extends RefCounted
 ## them, the same ruling height got.
 ## https://github.com/snackpackgames/cosmicparade/issues/59
 
+const STARTING_SHRINE_CAPACITY := 2
+
 var geometry: RealmGeometry
 var placements: Array[BoardPlacement] = []
+
+## How many shrines the player owns. Stock is derived from it, never stored.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+var shrine_capacity: int = STARTING_SHRINE_CAPACITY
 
 # Which piece stands on a hex, keyed by hex. One index over furniture, shrines and the Altar
 # alike: footprints never overlap is one rule, not three.
@@ -31,6 +37,33 @@ func zones() -> Array[InfluenceZone]:
 		if zone != null:
 			result.append(zone)
 	return result
+
+
+## The zones of shrines alone, fed ones only. `zones()` still returns everything, because
+## fixtures raise ground like anything else; this is the narrower question the Altar asks.
+## https://github.com/snackpackgames/cosmicparade/issues/30
+## https://github.com/snackpackgames/cosmicparade/issues/79
+func shrine_zones() -> Array[InfluenceZone]:
+	var result: Array[InfluenceZone] = []
+	for placement in shrine_placements():
+		var zone := placement.zone()
+		if zone != null:
+			result.append(zone)
+	return result
+
+
+func shrine_placements() -> Array[ShrinePlacement]:
+	var result: Array[ShrinePlacement] = []
+	for placement in placements:
+		if placement is ShrinePlacement:
+			result.append(placement)
+	return result
+
+
+## Shrines the player owns but has not placed. Derived: capacity minus what stands on the board.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+func shrines_in_stock() -> int:
+	return shrine_capacity - shrine_placements().size()
 
 
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.

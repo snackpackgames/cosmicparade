@@ -19,6 +19,7 @@ signal piece_returned(piece: BoardPiece)
 signal nothing_satisfies(criteria: Array[PlacementCriterion])
 
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
+const STOCK_SHRINE := preload("res://data/realm/shrine/plain_shrine.tres")
 const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
 
 var state := RealmState.new(RealmGeometry.new())
@@ -59,6 +60,15 @@ func lift_from_inventory(piece: BoardPiece) -> void:
 	_announce_if_impossible(piece, piece.anchor)
 
 
+## Lifts a shrine from stock through the same inventory path as any piece. Inert when every
+## shrine the player owns is already placed: capacity is the only limit, so nothing is conjured.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+func lift_from_stock() -> void:
+	if state.shrines_in_stock() <= 0:
+		return
+	lift_from_inventory(STOCK_SHRINE)
+
+
 ## Lifts the piece standing under the cursor, with the cursor's hex as the grab hex so the piece
 ## does not jump in the hand.
 func lift_under_cursor() -> void:
@@ -70,7 +80,7 @@ func lift_under_cursor() -> void:
 	var offsets := Footprint.offsets_for(origin.piece.shape)
 	var grab_offset: Vector2i = offsets[origin.hexes.find(cursor.targeted_hex)]
 	_inventory_piece = null
-	_touch(origin.zone().coordinates())
+	_touch_zone_of(origin)
 	carry.lift(CarriedPiece.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
 	_announce_if_impossible(origin.piece, grab_offset)
 
@@ -98,7 +108,7 @@ func lift_wing_under_cursor() -> void:
 	# What the wing is about to take away stops holding up ground, so the hexes its pieces
 	# covered need rebuilding whether or not the wing lands back near them.
 	for placement in state.placements_touching(wing.hexes()):
-		_touch(placement.zone().coordinates())
+		_touch_zone_of(placement)
 	_inventory_piece = null
 	_carried_wing = CarriedWing.new(wing.shape, cursor.targeted_hex, index)
 	carry.lift(_carried_wing, cursor.targeted_hex)
@@ -214,7 +224,7 @@ func _on_carry_ended() -> void:
 		# A wing move changes the board's extent and takes its furniture with it, so every zone
 		# may have moved; the spaces themselves are reconciled from the geometry.
 		for placement in state.placements:
-			_touch(placement.zone().coordinates())
+			_touch_zone_of(placement)
 		_carried_wing = null
 	board.zones = state.zones()
 	board.set_hexes(state.geometry.hexes())
@@ -237,6 +247,13 @@ func _on_cancelled() -> void:
 func _touch(coordinates: Array[Vector2i]) -> void:
 	for hex in coordinates:
 		_touched[hex] = true
+
+
+# A piece that projects nothing, such as an empty shrine, has no ground to rebuild.
+func _touch_zone_of(placement: BoardPlacement) -> void:
+	var zone := placement.zone()
+	if zone != null:
+		_touch(zone.coordinates())
 
 
 func _rebuild_touched() -> void:
