@@ -86,9 +86,10 @@ func place_altar(altar: Altar) -> BoardPlacement:
 ## no Altar stands.
 ## https://github.com/snackpackgames/cosmicparade/issues/79
 func altar_reading() -> AltarReading:
-	if altar_placement == null:
-		return AltarReading.of([] as Array[Vector2i], shrine_zones())
-	return AltarReading.of(altar_placement.hexes, shrine_zones())
+	var hexes: Array[Vector2i] = []
+	if altar_placement != null:
+		hexes = altar_placement.hexes
+	return AltarReading.of(hexes, shrine_zones())
 
 
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.
