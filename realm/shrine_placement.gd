@@ -1,24 +1,19 @@
 class_name ShrinePlacement
 extends BoardPlacement
-## A shrine standing on the board, with whatever is in its vessel right now. One vessel, one
-## offering, one domain, one zone.
-##
-## This overrides `zone()` rather than having `Shrine` override `zone_for()`, because the
-## offering is per-placement state and a `.tres` is shared by every holder of its path. The
-## split is the honest one: a piece knows what it projects as a *type*, a placement knows what
-## it is projecting *right now*.
+## A shrine standing on the board, and the offering in its vessel right now. A piece knows what
+## it projects as a type; a placement knows what it is projecting at this moment. An empty vessel
+## projects nothing at all, so the tally never sees an entry for it.
 ## https://github.com/snackpackgames/cosmicparade/issues/75
 
-## What is being offered, or null for an empty vessel.
 var offering: Fruit
 
 
-## An empty vessel projects nothing at all — no domain, no zone, nothing for #37's tally. The
-## radius is 2 however full the vessel is, because #55 lets nothing modify what a piece
-## projects.
-## https://github.com/snackpackgames/cosmicparade/issues/37
-## https://github.com/snackpackgames/cosmicparade/issues/55
-## https://github.com/snackpackgames/cosmicparade/issues/75
+func relocated(new_orientation: int, new_hexes: Array[Vector2i]) -> BoardPlacement:
+	var moved := ShrinePlacement.new(piece, new_orientation, new_hexes)
+	moved.offering = offering
+	return moved
+
+
 func zone() -> InfluenceZone:
 	if offering == null:
 		return null

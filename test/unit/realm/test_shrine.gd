@@ -1,6 +1,5 @@
 extends GutTest
-## The authored shrine: one hex, a radius-2 disc, and no criteria at all.
-## https://github.com/snackpackgames/cosmicparade/issues/74
+## The authored shrine: one hex, no criteria, one radius for all.
 
 
 func _authored() -> Shrine:
@@ -18,4 +17,6 @@ func test_a_shrine_is_one_hex_with_no_criteria() -> void:
 
 
 func test_a_shrine_is_a_board_piece() -> void:
+	# One piece supertype over furniture, shrines and the Altar alike.
+	# https://github.com/snackpackgames/cosmicparade/issues/74
 	assert_true(_authored() is BoardPiece)

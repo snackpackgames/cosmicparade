@@ -49,19 +49,14 @@ func detach(state: RealmState) -> void:
 		state.remove(origin)
 
 
-## A piece lifted from the board is put back down as the *same* placement, moved — so whatever
-## runtime state it carries that the piece does not, such as a shrine's offering, survives being
-## rearranged. Rearranging is free (adr/0009), and a vessel emptying itself because the player
-## shifted the shrine one hex would not be free.
-## A piece from stock gets a fresh placement, and asks the piece which kind.
 func commit(target: Vector2i, orientation: int, state: RealmState) -> void:
 	var hexes := hexes_at(target, orientation)
 	if origin != null:
-		origin.orientation = orientation
-		origin.hexes = hexes
-		state.place(origin)
-		return
-	state.place(piece.placement_at(orientation, hexes))
+		state.place(origin.relocated(orientation, hexes))
+	elif piece is Shrine:
+		state.place(ShrinePlacement.new(piece, orientation, hexes))
+	else:
+		state.place(BoardPlacement.new(piece, orientation, hexes))
 
 
 func restore(state: RealmState) -> void:

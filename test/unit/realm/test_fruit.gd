@@ -1,7 +1,5 @@
 extends GutTest
-## The authored fruit. A placeholder in the way the authored furniture is: growing it is M2/M4,
-## and all the map moved into scope is that an offering carries exactly one domain.
-## https://github.com/snackpackgames/cosmicparade/issues/75
+## The placeholder fruit: a name and exactly one domain.
 
 
 func test_the_authored_fruits_carry_one_domain_each() -> void:

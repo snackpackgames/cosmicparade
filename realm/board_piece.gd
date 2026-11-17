@@ -25,11 +25,3 @@ extends GameData
 ## https://github.com/snackpackgames/cosmicparade/issues/77
 func zone_for(_hexes: Array[Vector2i]) -> InfluenceZone:
 	return null
-
-
-## The placement type this piece stands in. Asked of the piece for the same reason `zone_for` is:
-## a shrine needs a placement that can hold an offering, and the carry must not have to know
-## which kind of thing it is putting down.
-## https://github.com/snackpackgames/cosmicparade/issues/74
-func placement_at(orientation: int, hexes: Array[Vector2i]) -> BoardPlacement:
-	return BoardPlacement.new(self, orientation, hexes)

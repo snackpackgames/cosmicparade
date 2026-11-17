@@ -1,6 +1,5 @@
 extends GutTest
-## A shrine on the board: what it projects is what is in its vessel right now.
-## https://github.com/snackpackgames/cosmicparade/issues/75
+## A shrine standing on the board, and what its vessel makes it project.
 
 
 func _fruit(domain: Domain.Kind) -> Fruit:

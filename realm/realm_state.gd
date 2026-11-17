@@ -6,16 +6,14 @@ extends RefCounted
 ## them, the same ruling height got.
 ## https://github.com/snackpackgames/cosmicparade/issues/59
 
-## How many shrines the realm owns. Rises only on the two ring Swells, to 4, and never again.
-## Capacity lives here and the adherent balance does not: capacity is a property of the realm,
-## while adherents are earned in the parade and spent here.
-## https://github.com/snackpackgames/cosmicparade/issues/76
-## https://github.com/snackpackgames/cosmicparade/issues/80
 const STARTING_SHRINE_CAPACITY := 2
 
 var geometry: RealmGeometry
 var placements: Array[BoardPlacement] = []
-var shrine_capacity := STARTING_SHRINE_CAPACITY
+
+## How many shrines the player owns. Stock is derived from it, never stored.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+var shrine_capacity: int = STARTING_SHRINE_CAPACITY
 
 # Which piece stands on a hex, keyed by hex. One index over furniture, shrines and the Altar
 # alike: footprints never overlap is one rule, not three.
@@ -41,17 +39,8 @@ func zones() -> Array[InfluenceZone]:
 	return result
 
 
-## What the player holds in hand: one shrine per point of capacity, minus the ones standing on
-## the board. Derived, never stored — there is no inventory object to desynchronise.
-## https://github.com/snackpackgames/cosmicparade/issues/74
-func shrines_in_stock() -> int:
-	return shrine_capacity - shrine_placements().size()
-
-
-## The zones of the fed shrines alone — the narrower question the Altar asks. `zones()` keeps
-## returning everything, because #30 has fixtures raising ground like anything else, so
-## elevation must keep counting shrines. Giving `InfluenceZone` a source field instead was
-## rejected: it would make a derived object carry provenance nothing else wants.
+## The zones of shrines alone, fed ones only. `zones()` still returns everything, because
+## fixtures raise ground like anything else; this is the narrower question the Altar asks.
 ## https://github.com/snackpackgames/cosmicparade/issues/30
 ## https://github.com/snackpackgames/cosmicparade/issues/79
 func shrine_zones() -> Array[InfluenceZone]:
@@ -63,13 +52,18 @@ func shrine_zones() -> Array[InfluenceZone]:
 	return result
 
 
-## Every shrine on the board, fed or empty.
 func shrine_placements() -> Array[ShrinePlacement]:
 	var result: Array[ShrinePlacement] = []
 	for placement in placements:
 		if placement is ShrinePlacement:
 			result.append(placement)
 	return result
+
+
+## Shrines the player owns but has not placed. Derived: capacity minus what stands on the board.
+## https://github.com/snackpackgames/cosmicparade/issues/74
+func shrines_in_stock() -> int:
+	return shrine_capacity - shrine_placements().size()
 
 
 ## The piece standing on this hex, or null. Answers for every hex of a footprint.
