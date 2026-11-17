@@ -285,3 +285,12 @@ func test_a_shrine_lifted_from_stock_lands_as_a_shrine_placement() -> void:
 	realm.carry.place()
 	assert_eq(realm.state.shrine_placements().size(), 1)
 	assert_eq(realm.state.shrines_in_stock(), 1)
+
+
+func test_a_shrine_placed_from_stock_arrives_with_an_empty_vessel() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/75 -- a shrine projects what is
+	# offered, and nothing has been offered yet.
+	var realm := await _realm()
+	realm.lift_from_stock()
+	realm.carry.place()
+	assert_eq(realm.state.shrine_zones().size(), 0)

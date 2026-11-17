@@ -8,9 +8,10 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
 ## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 swells the board, F10 hands the
-## player a wing to site and F11 lifts the wing under the cursor. All stand in for systems that do
-## not exist yet (the inventory, adr/0011, and what buys a Swell), and `lift_from_inventory`,
-## `swell`, `attach_wing` and `lift_wing_under_cursor` are the seams those will attach to.
+## player a wing to site, F11 lifts the wing under the cursor and F12 lifts a shrine from stock.
+## All stand in for systems that do not exist yet (the inventory, adr/0011, and what buys a
+## Swell), and `lift_from_inventory`, `swell`, `attach_wing`, `lift_wing_under_cursor` and
+## `lift_from_stock` are the seams those will attach to.
 
 signal piece_returned(piece: BoardPiece)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
@@ -152,6 +153,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			lift_from_inventory(DEBUG_PIECE)
 		elif event.keycode == KEY_F9:
 			swell()
+		elif event.keycode == KEY_F10:
+			attach_wing(DEBUG_WING)
+		elif event.keycode == KEY_F11:
+			lift_wing_under_cursor()
+		elif event.keycode == KEY_F12:
+			lift_from_stock()
 
 
 # Rotating while idle over a piece lifts it, turned one step. Furniture only, never a wing:

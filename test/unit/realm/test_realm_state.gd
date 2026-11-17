@@ -140,3 +140,20 @@ func test_furniture_does_not_come_out_of_shrine_stock() -> void:
 	var state := _state()
 	state.place(_furniture_at(Vector2i(0, 2)))
 	assert_eq(state.shrines_in_stock(), 2)
+
+
+func test_shrine_placements_are_only_the_shrines() -> void:
+	var state := _state()
+	_place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
+	state.place(_stool_at(Vector2i(0, 2)))
+	assert_eq(state.shrine_placements().size(), 1)
+	assert_eq(state.placements.size(), 2)
+
+
+func test_lifting_a_shrine_off_the_board_puts_it_back_in_stock() -> void:
+	# Stock is derived, so there is no inventory object to desynchronise: what is in hand
+	# is what is not on the board.
+	var state := _state()
+	var shrine := _place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
+	state.remove(shrine)
+	assert_eq(state.shrines_in_stock(), 2)

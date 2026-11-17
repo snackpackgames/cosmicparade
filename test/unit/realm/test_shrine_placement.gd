@@ -34,3 +34,10 @@ func test_the_radius_does_not_change_with_what_is_offered() -> void:
 	for domain: Domain.Kind in [Domain.Kind.FOREST, Domain.Kind.FLAME, Domain.Kind.GALE]:
 		placement.offering = _fruit(domain)
 		assert_eq(placement.zone().hex_count(), 19)
+
+
+func test_a_shrine_placement_is_a_board_placement() -> void:
+	# One occupancy index over all three kinds of board piece.
+	# https://github.com/snackpackgames/cosmicparade/issues/51
+	var placement := ShrinePlacement.new(_shrine(), 0, [Vector2i.ZERO] as Array[Vector2i])
+	assert_true(placement is BoardPlacement)
