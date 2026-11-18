@@ -143,9 +143,12 @@ The script corrects only unambiguous drift, so it is safe to run at any time:
 | Closed issue, or merged/closed PR, not `Done` | `Done` |
 | Open issue with open `blocked_by` edges, not `Blocked` | `Blocked` |
 | Open issue, no open blockers, currently `Blocked` | `Todo` |
+| Open issue with no Status set at all | `Todo` |
 | PR merged within the last 7 days, absent from the board | added, `Done` |
 
 It never touches an open PR — `In Progress` is the convention there, and nothing in the tracker distinguishes "awaiting review" from "still being written". An open, unblocked issue already in `Todo` or `In Progress` is left alone too, since only `Blocked` is provably wrong for it.
+
+An **unset** Status is corrected because it is not a position on the board at all — it means nobody has placed the issue, which is what every freshly filed issue looks like until a human picks it up. A blocked issue never reaches this rule; the `Blocked` row above is the stronger statement and is tested first.
 
 The seven-day window on added PRs is deliberate: the board has never held most of the pre-pipeline history, and backfilling it would bury the live work. Pass `--days N` to place an older merge.
 
