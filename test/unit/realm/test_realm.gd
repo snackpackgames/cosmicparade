@@ -19,6 +19,7 @@ func _disc() -> WingShape:
 func _realm() -> Realm:
 	var realm: Realm = add_child_autofree(REALM_SCENE.instantiate())
 	await wait_frames(1)
+	realm.balance.grant(30)
 	return realm
 
 
@@ -32,8 +33,8 @@ func _bare_realm() -> Realm:
 ## A radius-5 core with a disc wing anchored at (7, -1): 98 spaces, the wing's index 0.
 func _wing_on_the_board() -> Realm:
 	var realm := await _realm()
-	realm.swell()
-	realm.swell()
+	realm.take_ring()
+	realm.take_ring()
 	realm.attach_wing(_disc())
 	realm.carry.aim(Vector2i(7, -1))
 	realm.carry.place()
@@ -133,7 +134,7 @@ func test_rotating_while_idle_over_bare_ground_does_nothing() -> void:
 
 func test_a_swell_adds_the_ring_and_its_spaces() -> void:
 	var realm := await _realm()
-	realm.swell()
+	realm.take_ring()
 	await wait_frames(1)
 	assert_eq(realm.state.geometry.hexes().size(), 61)
 	assert_eq(realm.get_node("RealmBoard").get_child_count(), 61)
@@ -145,7 +146,7 @@ func test_a_swell_raises_ground_under_influence_that_was_spilling_into_nothing()
 	var realm := await _realm()
 	for hex: Vector2i in [Vector2i(3, 0), Vector2i(3, -1)] as Array[Vector2i]:
 		realm.state.place(BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i]))
-	realm.swell()
+	realm.take_ring()
 	await wait_frames(1)
 	assert_gt(
 		_top(realm, Vector2i(4, -1)), 0.0, "both rim pieces' zones already covered it"
@@ -209,8 +210,8 @@ func test_lifting_a_placeable_piece_announces_nothing() -> void:
 
 func test_attaching_a_wing_goes_through_the_same_carry() -> void:
 	var realm := await _realm()
-	realm.swell()
-	realm.swell()
+	realm.take_ring()
+	realm.take_ring()
 	realm.attach_wing(_disc())
 	assert_true(realm.carry.is_carrying())
 	realm.carry.aim(Vector2i(7, -1))
@@ -222,8 +223,8 @@ func test_attaching_a_wing_goes_through_the_same_carry() -> void:
 
 func test_cancelling_a_wing_attachment_leaves_the_board_as_it_was() -> void:
 	var realm := await _realm()
-	realm.swell()
-	realm.swell()
+	realm.take_ring()
+	realm.take_ring()
 	realm.attach_wing(_disc())
 	realm.carry.aim(Vector2i(7, -1))
 	realm.carry.cancel()
@@ -325,3 +326,11 @@ func test_there_is_no_way_to_stow_the_altar() -> void:
 	realm.lift_under_cursor()
 	realm.carry.cancel()
 	assert_eq(realm.state.shrines_in_stock(), 2)
+
+
+func test_an_unfunded_realm_cannot_swell() -> void:
+	var realm := await _realm()
+	realm.balance.adherents = 0
+	realm.take_ring()
+	assert_eq(realm.state.geometry.hexes().size(), 37)
+	assert_eq(realm.swell.tiers_taken, 0)

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SwellTier" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://realm/swell_tier.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier_name = "First Ring"
+board_effect = 0
+shrine_capacity_delta = 1
+cost = 10

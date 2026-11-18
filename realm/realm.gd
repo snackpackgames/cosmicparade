@@ -10,7 +10,7 @@ extends Node3D
 ## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 swells the board, F10 hands the
 ## player a wing to site, F11 lifts the wing under the cursor and F12 lifts a shrine from stock.
 ## All stand in for systems that do not exist yet (the inventory, adr/0011, and what buys a
-## Swell), and `lift_from_inventory`, `swell`, `attach_wing`, `lift_wing_under_cursor` and
+## Swell), and `lift_from_inventory`, `take_ring`, `attach_wing`, `lift_wing_under_cursor` and
 ## `lift_from_stock` are the seams those will attach to.
 
 signal piece_returned(piece: BoardPiece)
@@ -25,6 +25,10 @@ const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
 const ALTAR := preload("res://data/realm/altar/altar.tres")
 
 var state := RealmState.new(RealmGeometry.new())
+## The realm owns its wallet and the Swell that spends it; nothing global does.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+var balance := AdherentBalance.new()
+var swell := Swell.new(state, balance)
 
 # Every coordinate the preview has touched since the carry began, so ending it puts back
 # exactly what it disturbed.
@@ -120,10 +124,11 @@ func lift_wing_under_cursor() -> void:
 	_rebuild_touched()
 
 
-## Grows the board one step and floods the new ground with the influence already spilling into it.
+## Buys the next ring Swell and floods the new ground with the influence already spilling into
+## it. Inert when it cannot be paid for or the board cannot grow.
 ## https://github.com/snackpackgames/cosmicparade/issues/59
-func swell() -> void:
-	var arrived := state.geometry.swell()
+func take_ring() -> void:
+	var arrived := swell.take_ring()
 	if arrived.is_empty():
 		return
 	board.zones = state.zones()
@@ -154,7 +159,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_F8:
 			lift_from_inventory(DEBUG_PIECE)
 		elif event.keycode == KEY_F9:
-			swell()
+			take_ring()
 		elif event.keycode == KEY_F10:
 			attach_wing(DEBUG_WING)
 		elif event.keycode == KEY_F11:
