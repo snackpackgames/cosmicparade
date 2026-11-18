@@ -110,7 +110,7 @@ Because criteria are a gate checked once and never re-checked
 piece placed under `board position = edge` leaves that piece exactly where it is. The board can
 legally hold states it cannot produce.
 
-**What a Swell costs**, whether a wing Swell costs the same as a ring Swell, and how many
-shrine slots each grants are economy, and belong to M1's third map
+**What a Swell costs**, whether a wing Swell costs the same as a ring Swell, and how much
+shrine capacity each grants are economy, and belong to M1's third map
 ([#73](https://github.com/snackpackgames/cosmicparade/issues/73)). The near-equal wing sizes
 were chosen precisely so this decision does not pre-empt it.
