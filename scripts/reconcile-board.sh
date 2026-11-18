@@ -17,13 +17,20 @@
 #
 #   closed issue, merged/closed PR, Status != Done  ->  Done
 #   open issue with open blockers, Status != Blocked  ->  Blocked
-#   open issue, no open blockers, Status == Blocked   ->  Todo
+#   open issue, no open blockers, Status Blocked      ->  Todo
+#   open issue, Status unset (never placed)           ->  Todo
 #   recently merged PR absent from the board         ->  added, set Done
 #
 # Open PRs are never touched: an open PR is `In Progress` by convention and
 # nothing here can tell "awaiting review" from "still being written". An open,
 # unblocked issue already sitting in Todo or In Progress is left alone too —
-# only Blocked is a provably wrong Status for it.
+# for one of those, only Blocked is a provably wrong Status.
+#
+# An unset Status is corrected, because it is not a position on the board at
+# all: it means nobody has placed the issue, which is what every freshly filed
+# issue looks like. Todo is where an unplaced issue belongs, and a blocked one
+# never reaches this rule — the Blocked test above is the stronger statement
+# and runs first.
 #
 # Only PRs merged within the last RECENT_DAYS days are added, because this is
 # housekeeping for the merge that just happened, not a backfill: the board has
@@ -173,7 +180,7 @@ while IFS=$'\t' read -r item type number state status; do
 				want=Done
 			elif [[ "$(open_blockers "$number")" -gt 0 ]]; then
 				want=Blocked
-			elif [[ "$status" == "Blocked" ]]; then
+			elif [[ "$status" == "Blocked" || -z "$status" ]]; then
 				want=Todo
 			else
 				continue
