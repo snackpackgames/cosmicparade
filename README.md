@@ -104,7 +104,7 @@ pinned here.
 | **Domain influence** | The area a furniture piece, shrine, or tile projects its domain over. Always qualified as *domain* influence to keep it distinct from the pageant currency. |
 | **Meld** | What happens when *different* domain influences overlap — produces a new type. |
 | **Burgeon** | What happens when the *same* domain influence overlaps itself — it intensifies. The counterpart to Meld. |
-| **Swell** | Spending adherents to enlarge your realm and gain shrine slots. |
+| **Swell** | Spending adherents to enlarge your realm and raise its shrine capacity. |
 | **Adherents** | The currency. The audience a pageant wins you, spent on Swell. |
 | **Entity** | A spirit you attract, feed, bond with, summon, and who glazes your tiles. |
 | **Glaze** | An ability an entity imparts into a tile when fired, drawn from its bond-gated list. Carries the entity's presence as well as its effect. |
@@ -173,24 +173,28 @@ Twelve avatars against six kits gives 72 distinct openings from very little cont
 ### Realm
 
 A floating rock, starting as a **radial hexagon of radius 3 — 37 hex spaces, 7
-across** — centred on the board's origin, with **2 shrine slots**. The board is
+across** — centred on the board's origin, with a **shrine capacity of 2**. The board is
 generated from its radius rather than stored as a list of spaces, so growth is a
 matter of one number and an ordered set of wings (`adr/0015`).
 
-**Shrine slots** — a fixed *number* of slots, freely positioned by the player so long
-as no two shrines overlap. Fruit placed in a shrine's offering slot produces an
-effect. An offering sits there for a set number of parades and is then consumed.
-Offerings may be pulled out and swapped early; a partly-consumed offering can be
-replaced later.
+**Shrines** — a **capacity** rather than a map: you own one shrine per point of it,
+hold the ones you have not placed as stock, and may put each anywhere on the realm so
+long as no two footprints collide. Fruit placed in a shrine's **offering vessel**
+produces an effect, and a shrine whose vessel is empty projects nothing at all. An
+offering sits there for a set number of parades and is then consumed. Offerings may be
+pulled out and swapped early; a partly-consumed offering can be replaced later.
 
-**Swell** — spend adherents accrued from pageants to grow the realm's size and its
-number of shrine slots. Growth is **two-phase**: the first two Swells each add a
+**Swell** — spend adherents accrued from pageants to grow the realm's size and raise
+its shrine capacity. Growth has **three phases**. The first two Swells each add a
 whole ring, taking the core to **radius 5 — 91 spaces** (where the original "10×10"
-lands on a hex lattice), and the core never grows concentrically again. Every Swell
-after that attaches a **wing** — one figure from a closed vocabulary of four, six or
-seven spaces each — which the player sites anywhere edge-adjacent to the board and
-turns as they like. A wing is just more board: same lattice, no seam, no rule knows a
-space is on one. Wings may be picked up and reattached with their contents.
+lands on a hex lattice) and the shrine capacity to **4**; the core never grows
+concentrically again and the capacity never rises again. The next four each attach a
+**wing** — one figure from a closed vocabulary of four, six or seven spaces each —
+which the player sites anywhere edge-adjacent to the board and turns as they like.
+Past the fourth wing a Swell grants nothing realm-side, so the realm's permanent
+maximum is **115–119 spaces**. A wing is just more board: same lattice, no seam, no
+rule knows a space is on one. Wings may be picked up and reattached with their
+contents.
 
 **Furniture** — each piece occupies a **footprint** of one to three spaces from a
 closed set of five, turns in six 60° steps, and projects one **zone of domain
@@ -202,9 +206,13 @@ count, clearance, board position) — on **every** space of the footprint (`adr/
 These zones affect shrines, and where zones overlap they either **meld** (different
 types → a new type) or **burgeon** (same type → greater strength).
 
-**Altar** — every realm must have one; it can be moved. Unlike furniture, the Altar
-is affected by the influence of **shrines**, which further shapes the outcome of
-everything done here. Two actions:
+**Altar** — every realm must have one. It occupies a **triangle-three footprint** and
+stands at the centre of a new realm. It asks for one thing of where it stands, **level
+ground** under every space of that footprint, and it projects **no influence of its
+own**. It is moved by the same **carry** verb furniture uses, and nothing else — there
+is no second verb and nowhere to stow it. Unlike furniture, the Altar is affected by
+the influence of **shrines**, which further shapes the outcome of everything done
+here. Two actions:
 
 - **Summon** — burn offerings to summon the avatar of a lesser entity. It wanders
   your garden for a set number of parades, then returns.
@@ -422,11 +430,13 @@ Decided; the document above reflects them. These are ADR candidates.
   none. Difficulty tunes through the spread rate. Failing a cleansing means
   withdrawing with a weak reward, not a game over; the blight presses without
   punishing, which the cozy framing needs.
-- **Shrine slots: a fixed count, freely placed, footprints must not collide.** You own
-  a number of slots — two at the start, more from Swell — and may put each anywhere on
-  the realm. Only the shrine tiles themselves may not collide; their **projected
-  influence overlaps freely**, and overlapping shrine influence is a tool rather than a
-  violation. "Fixed" describes the count, not the positions.
+- **Shrine capacity: a count you hold, freely placed, footprints must not collide.** You
+  own one shrine per point of capacity — two at the start, four after both ring Swells and
+  never more — hold the un-placed ones as stock, and may put each anywhere on the realm.
+  Only the shrines themselves may not collide; their **projected influence overlaps
+  freely**, and overlapping shrine influence is a tool rather than a violation. Fruit goes
+  in a shrine's **offering vessel**, one offering to a vessel, and an empty vessel projects
+  nothing at all — no domain, no zone, nothing for the overlap tally to see.
 - **Avatar and starting domain are separate choices.** The avatar is **purely
   visual** — a look and a skybox palette, picked because you like the art, with no
   mechanical weight whatsoever. The starting **kit** is a separate pick from a small
@@ -450,7 +460,7 @@ Decided; the document above reflects them. These are ADR candidates.
 - **The realm grows by rings, then wings.** The board is a radial hexagon generated from a
   radius — 37 spaces at the start — because a radial board has no privileged direction and
   reads as an island rather than a cut-out of graph paper. Two ring Swells take the core to
-  91 and it never grows concentrically again; every Swell after that attaches a wing from a
+  91 and it never grows concentrically again; the next four Swells each attach a wing from a
   closed vocabulary of four figures, sited and turned by the player, edge-adjacent to any
   space the board already has. A wing is just more board — same lattice, no seam, relocatable
   with its contents — and the origin never moves, so nothing placed ever shifts.
@@ -461,6 +471,18 @@ Decided; the document above reflects them. These are ADR candidates.
   what the piece projects. The verb is carry rather than drag, because the targeting state is
   where the arrangement puzzle actually happens and a held button would make studying the
   board cost the player their hand.
+- **Swell is a ladder of six, priced 10 / 20 / 40 / 70 / 110 / 160.** Two ring Swells, each
+  granting a ring of board and a point of shrine capacity, then four wing Swells granting
+  board alone, then nothing realm-side — so the action simply becomes unavailable rather
+  than ruinously expensive. 410 adherents buys the complete ladder, which is the anchor the
+  pageant economy has to honour or revise deliberately. Affordability gates *entering* a
+  Swell, the geometry is performed, and only a board that actually changed is charged for.
+- **The Altar reads a per-domain count of the shrines reaching it.** For each domain, how
+  many shrine zones cover at least one space of its triangle-three footprint, each shrine
+  counted once however many of the three it reaches — so the footprint is a reach advantage
+  and never a multiplier. **Shrines only:** furniture influence is not read. The range is
+  0–4, the same ceiling as shrine capacity, and the reading is derived on demand and never
+  stored, because an offering lapses between parades.
 
 ## Open Design Questions
 

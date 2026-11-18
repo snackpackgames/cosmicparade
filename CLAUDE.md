@@ -170,6 +170,10 @@ unclaimed.
 Pick the layer/mask combination that matches a new body's role. If none fits, claim the
 next bit **inside that role's block** and add a row here in the same change.
 
+The `furniture` and `fixture` masks are there to be **picked**, not to police placement:
+footprints never overlapping is one rule over grid data — `RealmState`'s occupancy index
+across furniture, shrines and the Altar alike — and never a physics query.
+
 **Domain influence gets no layer, deliberately.** Influence zones are sets of hex
 coordinates per domain — grid data, not `Area3D` volumes — because `adr/0008` needs
 overlap interior and boundary as set and adjacency operations. Do not fill the gap with

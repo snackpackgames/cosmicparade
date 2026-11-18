@@ -5,6 +5,13 @@ extends RefCounted
 ## RealmGeometry knows nothing of cost and AdherentBalance nothing of Swell.
 ## https://github.com/snackpackgames/cosmicparade/issues/76
 
+## DEBUG ONLY: what one press of `debug_grant_adherents` adds. The first ring Swell's price, so
+## one press buys one of the cheapest Swell and presses are cumulative. Asserted equal to the
+## authored cost rather than trusted, because the prices are authored to be tuned.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+## https://github.com/snackpackgames/cosmicparade/issues/81
+const DEBUG_GRANT := 10
+
 ## Six rows, in order. There is no seventh: past the fourth wing the action is unavailable.
 ## https://github.com/snackpackgames/cosmicparade/issues/80
 const TIER_PATHS: Array[String] = [
