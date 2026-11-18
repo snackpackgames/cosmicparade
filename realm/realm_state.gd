@@ -16,7 +16,9 @@ var placements: Array[BoardPlacement] = []
 var shrine_capacity: int = STARTING_SHRINE_CAPACITY
 
 ## The Altar's placement, once stood. There is no stock entry for it, so a carry can only end in
-## a placement or a cancel: "every realm has one" holds by that absence, not by a guard.
+## a placement or a cancel: "every realm has one" holds by that absence, not by a guard. An index
+## over `placements` like `_occupants`, kept current by the same mutations — the Altar is
+## relocated through the one carry path, so nothing else could keep it so.
 ## https://github.com/snackpackgames/cosmicparade/issues/77
 var altar_placement: BoardPlacement
 
@@ -77,9 +79,30 @@ func shrines_in_stock() -> int:
 ## https://github.com/snackpackgames/cosmicparade/issues/77
 func place_altar(altar: Altar) -> BoardPlacement:
 	var hexes := Footprint.occupied(altar.shape, 0, Vector2i.ZERO, altar.anchor)
-	altar_placement = BoardPlacement.new(altar, 0, hexes)
-	place(altar_placement)
+	place(BoardPlacement.new(altar, 0, hexes))
 	return altar_placement
+
+
+## True when the Altar's footprint has a hex on this wing and a hex off it. #53 relocates a wing
+## with its contents and hands a straddling *furniture* footprint back to the player; the Altar
+## has no destination to be returned to, so the lift is refused instead — a second named cause on
+## the refusal a disconnecting lift already earns. An Altar wholly aboard travels with the wing,
+## and one wholly off it never notices. The question lives here rather than on RealmGeometry
+## because geometry knows nothing of placements and this asks about both.
+## https://github.com/snackpackgames/cosmicparade/issues/53
+## https://github.com/snackpackgames/cosmicparade/issues/77
+func altar_straddles_wing(wing_index: int) -> bool:
+	if altar_placement == null or wing_index < 0 or wing_index >= geometry.wings.size():
+		return false
+	var wing_hexes := _as_set(geometry.wings[wing_index].hexes())
+	var aboard := false
+	var ashore := false
+	for hex in altar_placement.hexes:
+		if wing_hexes.has(hex):
+			aboard = true
+		else:
+			ashore = true
+	return aboard and ashore
 
 
 ## What the Altar reads from the shrines reaching it, derived afresh and never stored. Empty when
@@ -99,12 +122,16 @@ func occupant_at(hex: Vector2i) -> BoardPlacement:
 
 func place(placement: BoardPlacement) -> void:
 	placements.append(placement)
+	if placement.piece is Altar:
+		altar_placement = placement
 	for hex in placement.hexes:
 		_occupants[hex] = placement
 
 
 func remove(placement: BoardPlacement) -> void:
 	placements.erase(placement)
+	if altar_placement == placement:
+		altar_placement = null
 	for hex in placement.hexes:
 		if _occupants.get(hex) == placement:
 			_occupants.erase(hex)

@@ -428,3 +428,44 @@ func test_a_cancelled_wing_swell_leaves_the_next_placement_unpriced() -> void:
 
 	assert_eq(realm.balance.adherents, 1000)
 	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_a_wing_the_altar_is_standing_across_is_not_lifted() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/77 -- the straddling path hands
+	# furniture back to the player, and the Altar has no destination, so this is a second
+	# named cause on the refusal a disconnecting lift already earns.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
+	))
+	assert_true(realm.state.altar_straddles_wing(0))
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_false(realm.carry.is_carrying())
+	assert_eq(realm.state.geometry.hexes().size(), 98, "the wing is still on the board")
+
+
+func test_carrying_the_altar_clear_frees_the_wing_again() -> void:
+	# Nothing is permanently pinned: the recourse is always available.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
+	))
+	realm.cursor.aim_at(Vector2i(5, 0))
+	realm.lift_under_cursor()
+	realm.carry.aim(Vector2i(-3, 0))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_true(realm.carry.is_carrying())

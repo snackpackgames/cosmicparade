@@ -132,12 +132,17 @@ func begin_wing_swell(shape: WingShape) -> void:
 
 
 ## Lifts the wing under the cursor, with its contents. Refused outright when the lift would leave
-## the board in two patches, because wings chain and `adr/0001`'s rock is one object.
+## the board in two patches, because wings chain and `adr/0001`'s rock is one object — and on the
+## same refusal when the Altar is standing across the seam, since a straddling piece is handed
+## back to the player and the Altar has nowhere to be handed back to. The recourse is to carry
+## the Altar clear first, which is always available.
+## https://github.com/snackpackgames/cosmicparade/issues/77
 func lift_wing_under_cursor() -> void:
 	if carry.is_carrying():
 		return
 	var index := state.geometry.wing_index_at(cursor.targeted_hex)
-	if index < 0 or not state.geometry.can_lift_wing(index):
+	if (index < 0 or not state.geometry.can_lift_wing(index)
+			or state.altar_straddles_wing(index)):
 		return
 	var wing := state.geometry.wings[index]
 	# What the wing is about to take away stops holding up ground, so the hexes its pieces

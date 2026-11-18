@@ -179,3 +179,100 @@ func test_the_altar_contributes_no_zone() -> void:
 	var state := _state()
 	state.place_altar(_altar())
 	assert_eq(state.zones().size(), 0)
+
+
+func _disc() -> WingShape:
+	return load("res://data/realm/wing_shape/disc.tres")
+
+
+## A radius-5 core with a disc wing anchored at (7, -1), the wing's index 0.
+func _state_with_a_wing() -> RealmState:
+	var state := _state()
+	state.geometry.swell()
+	state.geometry.swell()
+	assert_false(state.geometry.attach(_disc(), 0, Vector2i(7, -1)).is_empty())
+	return state
+
+
+# How many of `hexes` stand on the wing at `wing_index`.
+func _on_wing(state: RealmState, wing_index: int, hexes: Array[Vector2i]) -> int:
+	var wing_hexes := state.geometry.wings[wing_index].hexes()
+	var count := 0
+	for hex in hexes:
+		if wing_hexes.has(hex):
+			count += 1
+	return count
+
+
+func test_a_wing_carrying_the_whole_altar_can_still_be_lifted() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/53 relocates a wing with its
+	# contents; an Altar wholly aboard travels.
+	var state := _state_with_a_wing()
+	var aboard := Footprint.occupied(
+		Footprint.Shape.TRIANGLE, 0, Vector2i(7, -1), Vector2i.ZERO
+	)
+	assert_eq(_on_wing(state, 0, aboard), aboard.size(), "every hex of it is on the wing")
+	state.altar_placement = BoardPlacement.new(_altar(), 0, aboard)
+	assert_false(state.altar_straddles_wing(0))
+
+
+func test_an_altar_nowhere_near_the_wing_leaves_it_liftable() -> void:
+	var state := _state_with_a_wing()
+	state.place_altar(_altar())
+	assert_eq(_on_wing(state, 0, state.altar_placement.hexes), 0)
+	assert_false(state.altar_straddles_wing(0))
+
+
+func test_an_altar_across_the_seam_pins_the_wing() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/77 -- the straddling path
+	# returns furniture to the player, and the Altar has nowhere to be returned to.
+	var state := _state_with_a_wing()
+	# The triangle-three laid from (5, 0) reaches (6, 0) and (6, -1) on the wing's near edge
+	# and keeps (5, 0) on the core rim.
+	var across := Footprint.occupied(
+		Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO
+	)
+	var aboard := _on_wing(state, 0, across)
+	assert_gt(aboard, 0, "at least one hex on the wing")
+	assert_lt(aboard, across.size(), "and at least one off it")
+
+	state.altar_placement = BoardPlacement.new(_altar(), 0, across)
+
+	assert_true(state.altar_straddles_wing(0))
+
+
+func test_a_realm_with_no_altar_standing_pins_nothing() -> void:
+	var state := _state_with_a_wing()
+	assert_false(state.altar_straddles_wing(0))
+	assert_false(state.altar_straddles_wing(-1))
+	assert_false(state.altar_straddles_wing(1))
+
+
+func test_a_straddling_shrine_goes_back_to_stock_by_being_removed() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/74 gave shrines the
+	# destination the Altar lacks, and stock is derived -- so removal is the whole of it.
+	var state := _state()
+	var shrine := _place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
+	assert_eq(state.shrines_in_stock(), 1)
+
+	state.remove(shrine)
+
+	assert_eq(state.shrines_in_stock(), 2)
+	assert_null(state.occupant_at(Vector2i(-2, 0)))
+
+
+func test_the_altars_placement_follows_it_when_it_is_relocated() -> void:
+	# The field is an index over `placements`, kept by the mutations, because the Altar is
+	# relocated through the one carry path: a stale footprint would go on pinning a wing the
+	# Altar had already been carried off.
+	var state := _state()
+	state.place_altar(_altar())
+	state.remove(state.altar_placement)
+	assert_null(state.altar_placement, "lifted, it stands nowhere")
+
+	var moved := Footprint.occupied(
+		Footprint.Shape.TRIANGLE, 0, Vector2i(-2, 0), Vector2i.ZERO
+	)
+	state.place(BoardPlacement.new(_altar(), 0, moved))
+
+	assert_eq(state.altar_placement.hexes, moved)
