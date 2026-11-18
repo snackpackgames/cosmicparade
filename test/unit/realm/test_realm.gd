@@ -469,3 +469,36 @@ func test_carrying_the_altar_clear_frees_the_wing_again() -> void:
 	realm.lift_wing_under_cursor()
 
 	assert_true(realm.carry.is_carrying())
+
+
+func test_every_wing_figure_costs_the_same() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/85 put the choice behind
+	# OS.is_debug_build(), and https://github.com/snackpackgames/cosmicparade/issues/53's
+	# four figures are all 6 or 7 hexes, which is what makes the price readable beforehand.
+	var realm := await _realm_at_the_wings()
+	assert_eq(Realm.WING_SHAPES.size(), 4)
+	for shape: WingShape in Realm.WING_SHAPES:
+		assert_between(shape.offsets.size(), 6, 7, shape.shape_name)
+		realm.begin_wing_swell(shape)
+		assert_true(realm.carry.is_carrying(), shape.shape_name)
+		assert_eq(realm.swell.cost_for_next(), 40)
+		realm.carry.cancel()
+	assert_eq(realm.balance.adherents, 1000)
+
+
+func test_a_wing_carrying_the_whole_altar_is_still_lifted() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/53 relocates a wing with its
+	# contents, so an Altar wholly aboard travels rather than pinning it.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(7, -1), Vector2i.ZERO)
+	))
+	assert_false(realm.state.altar_straddles_wing(0))
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_true(realm.carry.is_carrying())
