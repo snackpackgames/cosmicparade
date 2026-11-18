@@ -30,6 +30,15 @@ func _bare_realm() -> Realm:
 	return realm
 
 
+## A radius-5 core with both rings paid for and 1000 adherents left, so the next Swell is a wing.
+func _realm_at_the_wings() -> Realm:
+	var realm := await _realm()
+	realm.balance.grant(1000)
+	realm.take_ring()
+	realm.take_ring()
+	return realm
+
+
 ## A radius-5 core with a disc wing anchored at (7, -1): 98 spaces, the wing's index 0.
 func _wing_on_the_board() -> Realm:
 	var realm := await _realm()
@@ -334,3 +343,162 @@ func test_an_unfunded_realm_cannot_swell() -> void:
 	realm.take_ring()
 	assert_eq(realm.state.geometry.hexes().size(), 37)
 	assert_eq(realm.swell.tiers_taken, 0)
+
+
+func test_buying_a_wing_debits_once_the_player_has_sited_it() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/76 -- affordability gates
+	# entering the carry, the commit performs the geometry, the debit follows the hexes.
+	var realm := await _realm_at_the_wings()
+	realm.begin_wing_swell(_disc())
+	assert_true(realm.carry.is_carrying())
+	assert_eq(realm.balance.adherents, 1000, "nothing is taken while the wing is in hand")
+	realm.carry.aim(Vector2i(7, -1))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+	assert_eq(realm.state.geometry.hexes().size(), 98)
+	assert_eq(realm.balance.adherents, 960)
+	assert_eq(realm.swell.tiers_taken, 3)
+
+
+func test_a_wing_swell_the_player_cannot_afford_never_begins() -> void:
+	# The unmet price stops the carry beginning; it is not
+	# https://github.com/snackpackgames/cosmicparade/issues/62's refusal.
+	var realm := await _realm()
+	realm.take_ring()
+	realm.take_ring()
+	assert_eq(realm.balance.adherents, 0)
+
+	realm.begin_wing_swell(_disc())
+
+	assert_false(realm.carry.is_carrying())
+	assert_eq(realm.state.geometry.hexes().size(), 91)
+	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_a_wing_siting_the_geometry_refuses_debits_nothing() -> void:
+	# Review Focus 2. An illegal siting inside the carry is
+	# https://github.com/snackpackgames/cosmicparade/issues/62's refusal: the player keeps
+	# carrying and the balance never moved.
+	var realm := await _realm_at_the_wings()
+	realm.begin_wing_swell(_disc())
+	realm.carry.aim(Vector2i.ZERO)
+
+	assert_false(realm.carry.place(), "a wing cannot land on the board it is growing")
+
+	assert_true(realm.carry.is_carrying())
+	assert_eq(realm.balance.adherents, 1000)
+	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_cancelling_a_wing_carry_costs_nothing() -> void:
+	# Review Focus 2. https://github.com/snackpackgames/cosmicparade/issues/76 -- the
+	# debit waits for hexes to arrive, so a cancel leaves board and balance untouched.
+	var realm := await _realm_at_the_wings()
+	var hexes_before: int = realm.state.geometry.hexes().size()
+	var adherents_before: int = realm.balance.adherents
+
+	realm.begin_wing_swell(_disc())
+	realm.carry.cancel()
+
+	assert_eq(realm.state.geometry.hexes().size(), hexes_before)
+	assert_eq(realm.balance.adherents, adherents_before)
+	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_placing_furniture_never_debits() -> void:
+	# The completion is wired only while a wing Swell is the thing in hand.
+	var realm := await _realm_at_the_wings()
+	realm.lift_from_inventory(_stool())
+	realm.carry.aim(Vector2i(3, 0))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+	assert_eq(realm.balance.adherents, 1000)
+	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_a_cancelled_wing_swell_leaves_the_next_placement_unpriced() -> void:
+	# The wiring is per carry, so an abandoned purchase cannot charge for what follows it.
+	var realm := await _realm_at_the_wings()
+	realm.begin_wing_swell(_disc())
+	realm.carry.cancel()
+
+	realm.lift_from_inventory(_stool())
+	realm.carry.aim(Vector2i(3, 0))
+	assert_true(realm.carry.place())
+
+	assert_eq(realm.balance.adherents, 1000)
+	assert_eq(realm.swell.tiers_taken, 2)
+
+
+func test_a_wing_the_altar_is_standing_across_is_not_lifted() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/77 -- the straddling path hands
+	# furniture back to the player, and the Altar has no destination, so this is a second
+	# named cause on the refusal a disconnecting lift already earns.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
+	))
+	assert_true(realm.state.altar_straddles_wing(0))
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_false(realm.carry.is_carrying())
+	assert_eq(realm.state.geometry.hexes().size(), 98, "the wing is still on the board")
+
+
+func test_carrying_the_altar_clear_frees_the_wing_again() -> void:
+	# Nothing is permanently pinned: the recourse is always available.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
+	))
+	realm.cursor.aim_at(Vector2i(5, 0))
+	realm.lift_under_cursor()
+	realm.carry.aim(Vector2i(-3, 0))
+	assert_true(realm.carry.place())
+	await wait_frames(1)
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_true(realm.carry.is_carrying())
+
+
+func test_every_wing_figure_costs_the_same() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/85 put the choice behind
+	# OS.is_debug_build(), and https://github.com/snackpackgames/cosmicparade/issues/53's
+	# four figures are all 6 or 7 hexes, which is what makes the price readable beforehand.
+	var realm := await _realm_at_the_wings()
+	assert_eq(Realm.WING_SHAPES.size(), 4)
+	for shape: WingShape in Realm.WING_SHAPES:
+		assert_between(shape.offsets.size(), 6, 7, shape.shape_name)
+		realm.begin_wing_swell(shape)
+		assert_true(realm.carry.is_carrying(), shape.shape_name)
+		assert_eq(realm.swell.cost_for_next(), 40)
+		realm.carry.cancel()
+	assert_eq(realm.balance.adherents, 1000)
+
+
+func test_a_wing_carrying_the_whole_altar_is_still_lifted() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/53 relocates a wing with its
+	# contents, so an Altar wholly aboard travels rather than pinning it.
+	var realm := await _wing_on_the_board()
+	var altar: BoardPiece = realm.state.altar_placement.piece
+	realm.state.remove(realm.state.altar_placement)
+	realm.state.place(BoardPlacement.new(
+		altar, 0,
+		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(7, -1), Vector2i.ZERO)
+	))
+	assert_false(realm.state.altar_straddles_wing(0))
+
+	realm.cursor.aim_at(Vector2i(7, -1))
+	realm.lift_wing_under_cursor()
+
+	assert_true(realm.carry.is_carrying())

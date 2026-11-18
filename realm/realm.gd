@@ -7,11 +7,13 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/31
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
-## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 swells the board, F10 hands the
-## player a wing to site, F11 lifts the wing under the cursor and F12 lifts a shrine from stock.
-## All stand in for systems that do not exist yet (the inventory, adr/0011, and what buys a
-## Swell), and `lift_from_inventory`, `take_ring`, `attach_wing`, `lift_wing_under_cursor` and
+## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 buys a ring Swell, F10 buys a
+## wing Swell and hands the player the wing to site, F7 cycles which figure that will be, F11
+## lifts the wing under the cursor and F12 lifts a shrine from stock. All stand in for systems
+## that do not exist yet (the inventory, adr/0011, and how adherents are earned), and
+## `lift_from_inventory`, `take_ring`, `begin_wing_swell`, `lift_wing_under_cursor` and
 ## `lift_from_stock` are the seams those will attach to.
+## https://github.com/snackpackgames/cosmicparade/issues/85
 
 signal piece_returned(piece: BoardPiece)
 ## Emitted on lifting a piece whose requirements nothing on the realm satisfies. Not a refusal:
@@ -21,8 +23,16 @@ signal nothing_satisfies(criteria: Array[PlacementCriterion])
 
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
 const STOCK_SHRINE := preload("res://data/realm/shrine/plain_shrine.tres")
-const DEBUG_WING := preload("res://data/realm/wing_shape/disc.tres")
 const ALTAR := preload("res://data/realm/altar/altar.tres")
+## The four authored wing figures, in order. Which one a wing Swell hands the player is a debug
+## choice in M1, and the price never depends on it: all four are 6 or 7 hexes.
+## https://github.com/snackpackgames/cosmicparade/issues/53
+const WING_SHAPES: Array[WingShape] = [
+	preload("res://data/realm/wing_shape/disc.tres"),
+	preload("res://data/realm/wing_shape/rhombus.tres"),
+	preload("res://data/realm/wing_shape/trapezoid.tres"),
+	preload("res://data/realm/wing_shape/triangle.tres"),
+]
 
 var state := RealmState.new(RealmGeometry.new())
 ## The realm owns its wallet and the Swell that spends it; nothing global does.
@@ -36,6 +46,8 @@ var _touched: Dictionary = {}
 var _inventory_piece: BoardPiece
 # The wing in hand, kept because it is what knows which pieces it shook loose.
 var _carried_wing: CarriedWing
+# DEBUG ONLY: which of WING_SHAPES the next wing Swell hands over.
+var _wing_figure := 0
 
 @onready var board: RealmBoard = $RealmBoard
 @onready var cursor: HexCursor = $HexCursor
@@ -103,13 +115,34 @@ func attach_wing(shape: WingShape) -> void:
 	carry.lift(_carried_wing, cursor.targeted_hex)
 
 
+## Buys the next wing Swell, which is not instantaneous: the player chooses the figure and the
+## place, so the purchase spans a carry. Inert when the next Swell is not a wing or the balance
+## will not cover it — an unmet price stops the carry beginning, the same surface as any
+## unavailable action, and never #62's refusal. The payment is wired to this one carry only, so
+## placing furniture never debits, and it waits until the hexes have arrived: a cancel and a
+## siting the geometry refuses both leave the balance and the tier untouched, with nothing to
+## refund because nothing was taken.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+func begin_wing_swell(shape: WingShape) -> void:
+	if carry.is_carrying() or not swell.can_take_wing():
+		return
+	attach_wing(shape)
+	if carry.is_carrying():
+		carry.placed.connect(_on_wing_swell_sited, CONNECT_ONE_SHOT)
+
+
 ## Lifts the wing under the cursor, with its contents. Refused outright when the lift would leave
-## the board in two patches, because wings chain and `adr/0001`'s rock is one object.
+## the board in two patches, because wings chain and `adr/0001`'s rock is one object — and on the
+## same refusal when the Altar is standing across the seam, since a straddling piece is handed
+## back to the player and the Altar has nowhere to be handed back to. The recourse is to carry
+## the Altar clear first, which is always available.
+## https://github.com/snackpackgames/cosmicparade/issues/77
 func lift_wing_under_cursor() -> void:
 	if carry.is_carrying():
 		return
 	var index := state.geometry.wing_index_at(cursor.targeted_hex)
-	if index < 0 or not state.geometry.can_lift_wing(index):
+	if (index < 0 or not state.geometry.can_lift_wing(index)
+			or state.altar_straddles_wing(index)):
 		return
 	var wing := state.geometry.wings[index]
 	# What the wing is about to take away stops holding up ground, so the hexes its pieces
@@ -156,12 +189,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("realm_rotate"):
 		_rotate()
 	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F8:
+		if event.keycode == KEY_F7:
+			_wing_figure = (_wing_figure + 1) % WING_SHAPES.size()
+		elif event.keycode == KEY_F8:
 			lift_from_inventory(DEBUG_PIECE)
 		elif event.keycode == KEY_F9:
 			take_ring()
 		elif event.keycode == KEY_F10:
-			attach_wing(DEBUG_WING)
+			begin_wing_swell(WING_SHAPES[_wing_figure])
 		elif event.keycode == KEY_F11:
 			lift_wing_under_cursor()
 		elif event.keycode == KEY_F12:
@@ -252,10 +287,24 @@ func _on_carry_ended() -> void:
 
 
 func _on_cancelled() -> void:
+	_unwire_wing_swell()
 	var returned := _inventory_piece
 	_on_carry_ended()
 	if returned != null:
 		piece_returned.emit(returned)
+
+
+# `Carry` emits `placed` only after a commit its verdict allowed, and the wing's hexes are on the
+# board by the time this runs, so the debit follows the ground rather than preceding it. The
+# connection is one-shot, so an abandoned purchase cannot charge for whatever is placed next.
+func _on_wing_swell_sited(hexes: Array[Vector2i]) -> void:
+	if not hexes.is_empty() and state.geometry.has_hex(hexes[0]):
+		swell.complete_wing()
+
+
+func _unwire_wing_swell() -> void:
+	if carry.placed.is_connected(_on_wing_swell_sited):
+		carry.placed.disconnect(_on_wing_swell_sited)
 
 
 func _touch(coordinates: Array[Vector2i]) -> void:

@@ -47,6 +47,28 @@ func can_afford() -> bool:
 	return is_available() and _balance.can_afford(cost_for_next())
 
 
+## True when the next Swell is a wing the balance covers. A wing Swell is not instantaneous —
+## the player chooses a figure and a place — so this gates *entering* the carry, which is an
+## unmet price and not a refusal. Nothing can spend during a carry, so `complete_wing` cannot
+## find itself short.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+func can_take_wing() -> bool:
+	var tier := next_tier()
+	return tier != null and tier.board_effect == SwellTier.Effect.WING and can_afford()
+
+
+## Pays for the wing the player has just sited and advances the ladder. Called only once the
+## board has actually grown: the geometry belongs to the carry, so all that is left here is the
+## payment. Returns false and changes nothing when there is no wing tier to pay for.
+## https://github.com/snackpackgames/cosmicparade/issues/76
+func complete_wing() -> bool:
+	if not can_take_wing():
+		return false
+	_balance.spend(next_tier().cost)
+	tiers_taken += 1
+	return true
+
+
 ## Buys the next Swell if it is a ring. Returns the hexes that arrived, empty when nothing
 ## changed: unavailable, unaffordable, not a ring, or the geometry refused.
 func take_ring() -> Array[Vector2i]:

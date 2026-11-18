@@ -124,3 +124,43 @@ func test_four_shrines_reach_depth_three_and_furniture_takes_it_to_four() -> voi
 	state.place(BoardPlacement.new(_piece(Domain.Kind.FOREST, 1), 0, hexes))
 
 	assert_eq(Elevation.depth_at(Vector2i.ZERO, state.zones()), 4)
+
+
+func test_a_wing_tier_is_takeable_only_once_the_rings_are_done() -> void:
+	var parts := _swell(1000)
+	var swell: Swell = parts[0]
+	assert_false(swell.can_take_wing())
+	swell.take_ring()
+	swell.take_ring()
+	assert_true(swell.can_take_wing())
+	assert_eq(swell.cost_for_next(), 40)
+
+
+func test_an_unaffordable_wing_never_begins() -> void:
+	var parts := _swell(30)
+	var swell: Swell = parts[0]
+	swell.take_ring()
+	swell.take_ring()
+	assert_false(swell.can_take_wing())
+
+
+func test_completing_a_wing_debits_and_advances_the_tier() -> void:
+	var parts := _swell(70)
+	var swell: Swell = parts[0]
+	swell.take_ring()
+	swell.take_ring()
+	assert_true(swell.complete_wing())
+	assert_eq((parts[2] as AdherentBalance).adherents, 0)
+	assert_eq(swell.tiers_taken, 3)
+	assert_eq(swell.cost_for_next(), 70)
+
+
+func test_completing_a_wing_the_player_cannot_afford_changes_nothing() -> void:
+	# The order from https://github.com/snackpackgames/cosmicparade/issues/76 runs forwards
+	# only: the payment is never taken on credit.
+	var parts := _swell(30)
+	var swell: Swell = parts[0]
+	swell.take_ring()
+	swell.take_ring()
+	assert_false(swell.complete_wing())
+	assert_eq(swell.tiers_taken, 2)
