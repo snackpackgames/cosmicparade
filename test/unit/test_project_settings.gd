@@ -21,6 +21,13 @@ const EXPECTED_LAYER_NAMES := {
 	26: "tile",
 }
 
+## The two debug-only affordances, and the keys they answer to.
+## https://github.com/snackpackgames/cosmicparade/issues/85
+const EXPECTED_DEBUG_ACTIONS := {
+	"debug_grant_adherents": KEY_F10,
+	"debug_empty_vessel": KEY_F11,
+}
+
 const EXPECTED_REALM_ACTIONS := [
 	"realm_lift_or_place", "realm_cancel", "realm_rotate",
 	"realm_target_left", "realm_target_right", "realm_target_forward", "realm_target_back",
@@ -89,3 +96,22 @@ func test_the_carry_verb_is_input_map_actions_not_mouse_events() -> void:
 			has_joypad = has_joypad or event is InputEventJoypadButton \
 				or event is InputEventJoypadMotion
 		assert_true(has_joypad, "%s should be bound for gamepad" % action)
+
+
+func test_the_two_debug_affordances_are_actions_on_f10_and_f11() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/76 named
+	# `debug_grant_adherents` as an InputMap action rather than a raw keycode, so
+	# project.godot has to carry both of them. No gamepad binding: these stand in for
+	# systems that do not exist, not for the carry verb.
+	for action: String in EXPECTED_DEBUG_ACTIONS:
+		var keycode: Key = EXPECTED_DEBUG_ACTIONS[action]
+		assert_true(
+			ProjectSettings.has_setting("input/%s" % action), "%s should be declared" % action
+		)
+		var event := InputEventKey.new()
+		event.physical_keycode = keycode
+		event.pressed = true
+		assert_true(
+			InputMap.event_is_action(event, action),
+			"%s should answer to %s" % [action, OS.get_keycode_string(keycode)]
+		)

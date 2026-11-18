@@ -7,12 +7,16 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/31
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
-## DEBUG ONLY: F8 lifts a placeholder stool from "inventory", F9 buys a ring Swell, F10 buys a
-## wing Swell and hands the player the wing to site, F7 cycles which figure that will be, F11
-## lifts the wing under the cursor and F12 lifts a shrine from stock. All stand in for systems
-## that do not exist yet (the inventory, adr/0011, and how adherents are earned), and
-## `lift_from_inventory`, `take_ring`, `begin_wing_swell`, `lift_wing_under_cursor` and
-## `lift_from_stock` are the seams those will attach to.
+## DEBUG ONLY, and only in a debug build: F5 buys a wing Swell and hands the player the wing to
+## site, F6 lifts the wing under the cursor, F7 cycles which figure a wing Swell will hand over,
+## F8 lifts a placeholder stool from "inventory", F9 buys a ring Swell, F10 grants adherents, F11
+## empties the vessel of the shrine under the cursor and F12 lifts a shrine from stock. F10 and
+## F11 are the InputMap actions `debug_grant_adherents` and `debug_empty_vessel`; the rest are
+## raw keycodes, and the wing pair moved down from F10/F11 to make room. All stand in for systems
+## that do not exist yet (the inventory, adr/0011, how adherents are earned, and the parade that
+## is the only clock), and `lift_from_inventory`, `take_ring`, `begin_wing_swell`,
+## `lift_wing_under_cursor`, `lift_from_stock` and `empty_vessel_under_cursor` are the seams
+## those will attach to.
 ## https://github.com/snackpackgames/cosmicparade/issues/85
 
 signal piece_returned(piece: BoardPiece)
@@ -57,9 +61,11 @@ var _wing_figure := 0
 @onready var refusal: RefusalDisplay = $RefusalDisplay
 @onready var spill: SpillDisplay = $SpillDisplay
 @onready var requirements: RequirementList = %RequirementList
+@onready var readout: DebugReadout = $DebugReadout
 
 
 func _ready() -> void:
+	readout.visible = OS.is_debug_build()
 	state.place_altar(ALTAR)
 	board.build(state.geometry.hexes())
 	carry.configure(state)
@@ -170,6 +176,26 @@ func take_ring() -> void:
 	_refresh_view()
 
 
+## DEBUG ONLY: empties the vessel of the shrine under the cursor. Inert anywhere else, and while
+## a piece is in hand. A lapse cannot otherwise be observed in M1 at all — `adr/0009` makes the
+## parade the only clock and parades are M5/M6 — so without this the behaviour #75 called the
+## realm's most distinctive would ship with no way to see it by hand. The ground the offering
+## raised drops at once and the shrine keeps standing, because criteria are never re-checked.
+## https://github.com/snackpackgames/cosmicparade/issues/38
+## https://github.com/snackpackgames/cosmicparade/issues/75
+func empty_vessel_under_cursor() -> void:
+	if carry.is_carrying():
+		return
+	var placement := state.occupant_at(cursor.targeted_hex) as ShrinePlacement
+	if placement == null or placement.offering == null:
+		return
+	var lapsed := placement.zone()
+	placement.offering = null
+	board.zones = state.zones()
+	board.rebuild(lapsed.coordinates())
+	_refresh_view()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var hex: Variant = cursor.hex_under_pointer(camera, event.position)
@@ -188,19 +214,38 @@ func _unhandled_input(event: InputEvent) -> void:
 		carry.cancel()
 	elif event.is_action_pressed("realm_rotate"):
 		_rotate()
-	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F7:
-			_wing_figure = (_wing_figure + 1) % WING_SHAPES.size()
-		elif event.keycode == KEY_F8:
-			lift_from_inventory(DEBUG_PIECE)
-		elif event.keycode == KEY_F9:
-			take_ring()
-		elif event.keycode == KEY_F10:
-			begin_wing_swell(WING_SHAPES[_wing_figure])
-		elif event.keycode == KEY_F11:
-			lift_wing_under_cursor()
-		elif event.keycode == KEY_F12:
-			lift_from_stock()
+	elif OS.is_debug_build():
+		_debug_input(event)
+
+
+# DEBUG ONLY. The two declared actions first, then the raw function keys. #76 named
+# `debug_grant_adherents` as an InputMap action and `debug_empty_vessel` follows it; the older
+# affordances stayed raw keycodes, and the wing pair moved to F5 and F6 to clear F10 and F11 for
+# the actions. Nothing was dropped: all six still have a key.
+# https://github.com/snackpackgames/cosmicparade/issues/76
+func _debug_input(event: InputEvent) -> void:
+	if event.is_action_pressed("debug_grant_adherents"):
+		balance.grant(Swell.DEBUG_GRANT)
+		_refresh_readout()
+	elif event.is_action_pressed("debug_empty_vessel"):
+		empty_vessel_under_cursor()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		_debug_key((event as InputEventKey).keycode)
+
+
+func _debug_key(keycode: Key) -> void:
+	if keycode == KEY_F5:
+		begin_wing_swell(WING_SHAPES[_wing_figure])
+	elif keycode == KEY_F6:
+		lift_wing_under_cursor()
+	elif keycode == KEY_F7:
+		_wing_figure = (_wing_figure + 1) % WING_SHAPES.size()
+	elif keycode == KEY_F8:
+		lift_from_inventory(DEBUG_PIECE)
+	elif keycode == KEY_F9:
+		take_ring()
+	elif keycode == KEY_F12:
+		lift_from_stock()
 
 
 # Rotating while idle over a piece lifts it, turned one step. Furniture only, never a wing:
@@ -256,6 +301,7 @@ func _on_aimed(hexes: Array[Vector2i], verdict: PlacementVerdict) -> void:
 	else:
 		refusal.mark(verdict.failing_hexes, zones)
 		requirements.mark_failing(verdict.failing_criteria)
+	_refresh_readout()
 
 
 func _on_placed() -> void:
@@ -327,3 +373,46 @@ func _rebuild_touched() -> void:
 
 func _refresh_view() -> void:
 	view.show_placements(state.placements, state.zones())
+	_refresh_readout()
+
+
+# Refreshed from the committed view and from every aim, so the numbers track a carry instead of
+# waiting for it to land. Silent outside a debug build, where the readout is hidden.
+# https://github.com/snackpackgames/cosmicparade/issues/85
+func _refresh_readout() -> void:
+	if not OS.is_debug_build():
+		return
+	readout.refresh(_reading_for_readout(), balance, swell)
+
+
+# The committed reading, plus the shrine in hand when there is one.
+func _reading_for_readout() -> AltarReading:
+	var carried_zone := _carried_shrine_zone()
+	if carried_zone == null:
+		return state.altar_reading()
+	var hexes: Array[Vector2i] = []
+	if state.altar_placement != null:
+		hexes = state.altar_placement.hexes
+	var zones := state.shrine_zones()
+	zones.append(carried_zone)
+	return AltarReading.of(hexes, zones)
+
+
+# The reading is shrine zones only, so a candidate joins it only when a shrine is in hand — a
+# carried piece of furniture never enters it, however close to the Altar it is aimed. A shrine
+# projects through its placement and not its piece, because what is in the vessel is
+# per-placement state, so `Carried.zone_at` is null for every shrine and the zone is taken from
+# the placement it was lifted from, moved to where it is aimed now.
+# https://github.com/snackpackgames/cosmicparade/issues/75
+# https://github.com/snackpackgames/cosmicparade/issues/79
+func _carried_shrine_zone() -> InfluenceZone:
+	if not carry.is_carrying():
+		return null
+	var carried := carry.carried as CarriedPiece
+	if carried == null or not (carried.piece is Shrine):
+		return null
+	var origin := carried.origin as ShrinePlacement
+	if origin == null:
+		return null
+	var hexes := carried.hexes_at(carry.target, carry.orientation)
+	return origin.relocated(carry.orientation, hexes).zone()

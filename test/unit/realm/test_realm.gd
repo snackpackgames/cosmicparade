@@ -16,6 +16,28 @@ func _disc() -> WingShape:
 	return load("res://data/realm/wing_shape/disc.tres")
 
 
+func _shrine_piece() -> Shrine:
+	return load("res://data/realm/shrine/plain_shrine.tres")
+
+
+# A Forest offering, so what the Altar reads of it is named "Forest".
+func _moss_plum() -> Fruit:
+	return load("res://data/realm/fruit/moss_plum.tres")
+
+
+func _fed_shrine(realm: Realm, hex: Vector2i) -> ShrinePlacement:
+	var placement := ShrinePlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
+	placement.offering = _moss_plum()
+	realm.state.place(placement)
+	return placement
+
+
+# Redraws the ground from the committed board, which only a commit otherwise does.
+func _recommit(realm: Realm) -> void:
+	realm.board.zones = realm.state.zones()
+	realm.board.rebuild(realm.state.geometry.hexes())
+
+
 func _realm() -> Realm:
 	var realm: Realm = add_child_autofree(REALM_SCENE.instantiate())
 	await wait_frames(1)
@@ -283,10 +305,9 @@ func test_lifting_from_an_empty_stock_does_nothing() -> void:
 	# be inert rather than conjuring one.
 	var realm := await _realm()
 	for hex in [Vector2i(-2, 0), Vector2i(2, 0)]:
-		var shrine := ShrinePlacement.new(
-			load("res://data/realm/shrine/plain_shrine.tres"), 0, [hex] as Array[Vector2i]
+		realm.state.place(
+			ShrinePlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
 		)
-		realm.state.place(shrine)
 	assert_eq(realm.state.shrines_in_stock(), 0)
 
 	realm.lift_from_stock()
@@ -502,3 +523,27 @@ func test_a_wing_carrying_the_whole_altar_is_still_lifted() -> void:
 	realm.lift_wing_under_cursor()
 
 	assert_true(realm.carry.is_carrying())
+
+
+
+func test_emptying_a_vessel_drops_its_ground_and_leaves_the_shrine_standing() -> void:
+	# Review Focus 5. https://github.com/snackpackgames/cosmicparade/issues/38 -- the ground
+	# drops at once; https://github.com/snackpackgames/cosmicparade/issues/55 -- the piece
+	# stays, because criteria are never re-checked.
+	var realm := await _realm()
+	_fed_shrine(realm, Vector2i(-2, 0))
+	_fed_shrine(realm, Vector2i(-2, 1))
+	_recommit(realm)
+	assert_gt(_top(realm, Vector2i(-2, 0)), 0.0, "two Forest zones overlap there")
+
+	realm.cursor.aim_at(Vector2i(-2, 0))
+	realm.empty_vessel_under_cursor()
+
+	assert_eq(_top(realm, Vector2i(-2, 0)), 0.0, "the ground it raised drops at once")
+	assert_eq(realm.state.shrine_placements().size(), 2, "both shrines keep standing")
+	assert_eq(realm.state.shrine_zones().size(), 1, "one vessel is empty")
+
+	realm.cursor.aim_at(Vector2i(1, 0))
+	realm.empty_vessel_under_cursor()
+
+	assert_eq(realm.state.placements.size(), 3, "inert over the Altar, which is no shrine")
