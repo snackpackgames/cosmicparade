@@ -207,7 +207,7 @@ while read -r number; do
 		sleep 2
 		item=$(gh api graphql -f owner="$OWNER" -f repo="$REPO" -F number="$number" \
 			-f query='
-			query($owner:String!,$repo:String!,$number:Int!,$project:Int!){
+			query($owner:String!,$repo:String!,$number:Int!){
 				repository(owner:$owner,name:$repo){
 					pullRequest(number:$number){
 						projectItems(first:10){nodes{id project{number}}}
