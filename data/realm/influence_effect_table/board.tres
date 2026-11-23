@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="InfluenceEffectTable" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://realm/influence_effect_table.gd" id="1_table"]
+[ext_resource type="Script" path="res://realm/influence_effect_entry.gd" id="2_entry"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/fused_placeholder.tres" id="3_fused"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/forest.tres" id="4_forest"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/grassland.tres" id="5_grassland"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/wetland.tres" id="6_wetland"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/stone.tres" id="7_stone"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/flame.tres" id="8_flame"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/gale.tres" id="9_gale"]
+[ext_resource type="Resource" path="res://data/realm/influence_effect/ceiling.tres" id="10_ceiling"]
+
+[sub_resource type="Resource" id="Entry_fused"]
+script = ExtResource("2_entry")
+domains = Array[int]([0, 4])
+effect = ExtResource("3_fused")
+
+[sub_resource type="Resource" id="Entry_forest"]
+script = ExtResource("2_entry")
+domains = Array[int]([0])
+effect = ExtResource("4_forest")
+
+[sub_resource type="Resource" id="Entry_grassland"]
+script = ExtResource("2_entry")
+domains = Array[int]([1])
+effect = ExtResource("5_grassland")
+
+[sub_resource type="Resource" id="Entry_wetland"]
+script = ExtResource("2_entry")
+domains = Array[int]([2])
+effect = ExtResource("6_wetland")
+
+[sub_resource type="Resource" id="Entry_stone"]
+script = ExtResource("2_entry")
+domains = Array[int]([3])
+effect = ExtResource("7_stone")
+
+[sub_resource type="Resource" id="Entry_flame"]
+script = ExtResource("2_entry")
+domains = Array[int]([4])
+effect = ExtResource("8_flame")
+
+[sub_resource type="Resource" id="Entry_gale"]
+script = ExtResource("2_entry")
+domains = Array[int]([5])
+effect = ExtResource("9_gale")
+
+[resource]
+script = ExtResource("1_table")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_fused"), SubResource("Entry_forest"), SubResource("Entry_grassland"), SubResource("Entry_wetland"), SubResource("Entry_stone"), SubResource("Entry_flame"), SubResource("Entry_gale")])
+ceiling_effect = ExtResource("10_ceiling")
