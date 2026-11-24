@@ -233,3 +233,97 @@ func test_different_domains_disagree_and_two_bare_hexes_agree() -> void:
 	assert_false(stone.agrees_with(gale))
 	assert_false(stone.agrees_with(nothing))
 	assert_true(nothing.agrees_with(Meld.resolve(Vector2i(9, 9), [] as Array[InfluenceZone], table)))
+
+
+func _patch(domain: Domain.Kind, hexes: Array[Vector2i]) -> InfluenceZone:
+	return InfluenceZone.new(domain, hexes)
+
+
+func test_a_region_is_every_contiguous_hex_whose_effects_agree() -> void:
+	var zones: Array[InfluenceZone] = [
+		_patch(Domain.Kind.STONE, [Vector2i.ZERO, Vector2i(1, 0), Vector2i(2, 0)])
+	]
+	var region := Meld.region_at(Vector2i.ZERO, zones, _table())
+	assert_eq(region.size(), 3)
+	assert_eq(_names(region.effects), ["STONE"] as Array[String])
+
+
+func test_hexes_that_do_not_touch_are_two_regions() -> void:
+	var zones: Array[InfluenceZone] = [
+		_patch(Domain.Kind.STONE, [Vector2i.ZERO, Vector2i(4, 0)])
+	]
+	assert_eq(Meld.region_at(Vector2i.ZERO, zones, _table()).size(), 1)
+	assert_eq(Meld.region_at(Vector2i(4, 0), zones, _table()).size(), 1)
+
+
+func test_a_neighbour_showing_different_effects_ends_the_region() -> void:
+	var zones: Array[InfluenceZone] = [
+		_patch(Domain.Kind.STONE, [Vector2i.ZERO, Vector2i(1, 0)]),
+		_patch(Domain.Kind.GALE, [Vector2i(1, 0)]),
+	]
+	var table := _table()
+	assert_eq(Meld.region_at(Vector2i.ZERO, zones, table).size(), 1)
+	assert_eq(_names(Meld.region_at(Vector2i(1, 0), zones, table).effects),
+		["STONE", "GALE"] as Array[String])
+
+
+func test_every_region_on_the_board_is_grouped_once() -> void:
+	var zones: Array[InfluenceZone] = [
+		_patch(Domain.Kind.STONE, [Vector2i.ZERO, Vector2i(1, 0)]),
+		_patch(Domain.Kind.GALE, [Vector2i(6, 0)]),
+	]
+	var regions := Meld.regions(zones, _table())
+	assert_eq(regions.size(), 2)
+	var total := 0
+	for region in regions:
+		total += region.size()
+	assert_eq(total, 3)
+
+
+func test_regions_agrees_with_region_at_for_the_same_hex() -> void:
+	var zones: Array[InfluenceZone] = [
+		_patch(Domain.Kind.STONE, HexCoordinates.disc(Vector2i.ZERO, 2))
+	]
+	var table := _table()
+	var one := Meld.region_at(Vector2i(1, 0), zones, table)
+	var found := 0
+	for region in Meld.regions(zones, table):
+		if region.contains(Vector2i(1, 0)):
+			found += 1
+			assert_eq(region.size(), one.size())
+	assert_eq(found, 1)
+
+
+func test_no_region_covers_a_hex_nothing_covers() -> void:
+	assert_true(Meld.regions([] as Array[InfluenceZone], _table()).is_empty())
+
+
+# https://github.com/snackpackgames/cosmicparade/issues/109 — a melded area straddling the depth-4
+# contour is two regions, because the ceiling effect is in the set a region compares. Stacking
+# MAX_DEPTH + 1 zones on one hex of a patch puts that hex alone at its ceiling.
+func test_a_patch_straddling_the_ceiling_contour_is_three_regions() -> void:
+	var patch: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1, 0), Vector2i(2, 0)]
+	var zones: Array[InfluenceZone] = [_patch(Domain.Kind.STONE, patch)]
+	for _i in Elevation.MAX_DEPTH:
+		zones.append(_patch(Domain.Kind.STONE, [Vector2i(1, 0)]))
+	var table := _table()
+	assert_eq(Elevation.depth_at(Vector2i(1, 0), zones), Elevation.MAX_DEPTH)
+	assert_eq(Meld.regions(zones, table).size(), 3, "the maxed hex severs the patch")
+	assert_eq(Meld.region_at(Vector2i(1, 0), zones, table).size(), 1)
+	assert_eq(Meld.region_at(Vector2i.ZERO, zones, table).size(), 1)
+
+
+func test_region_at_a_hex_nothing_covers_is_null() -> void:
+	assert_null(Meld.region_at(Vector2i(3, 3), [] as Array[InfluenceZone], _table()))
+
+
+# InfluenceZone keeps the coordinates that land in the void and clips at consumption, so
+# resolution and regions answer for them like any other hex.
+func test_resolution_and_regions_answer_for_coordinates_in_the_void() -> void:
+	var void_hexes: Array[Vector2i] = [Vector2i(40, 0), Vector2i(41, 0)]
+	var zones: Array[InfluenceZone] = [_patch(Domain.Kind.FLAME, void_hexes)]
+	var table := _table()
+	assert_eq(_names(Meld.resolve(Vector2i(40, 0), zones, table).effects()),
+		["FLAME"] as Array[String])
+	assert_eq(Meld.regions(zones, table).size(), 1)
+	assert_eq(Meld.region_at(Vector2i(40, 0), zones, table).size(), 2)
