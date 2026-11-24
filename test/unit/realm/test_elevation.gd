@@ -112,3 +112,38 @@ func test_evaluating_an_arrangement_does_not_change_anything() -> void:
 	assert_gt(Elevation.height_at(Vector2i.ZERO, raised), 0.0)
 	assert_almost_eq(Elevation.height_at(Vector2i.ZERO, none), 0.0, 0.0001)
 	assert_gt(Elevation.height_at(Vector2i.ZERO, raised), 0.0)
+
+
+func test_zone_counts_tally_the_zones_per_domain() -> void:
+	var zones: Array[InfluenceZone] = []
+	zones.append_array(_zones(Domain.Kind.FOREST, 2, Vector2i.ZERO))
+	zones.append_array(_zones(Domain.Kind.STONE, 1, Vector2i.ZERO))
+	zones.append_array(_zones(Domain.Kind.FLAME, 1, Vector2i(5, 0)))
+	var counts := Elevation.zone_counts(Vector2i.ZERO, zones)
+	assert_eq(counts[Domain.Kind.FOREST], 2)
+	assert_eq(counts[Domain.Kind.STONE], 1)
+	assert_false(counts.has(Domain.Kind.FLAME))
+
+
+func test_a_depth_is_one_less_than_the_count_capped_at_the_maximum() -> void:
+	assert_eq(Elevation.depth_for_count(0), 0)
+	assert_eq(Elevation.depth_for_count(1), 0)
+	assert_eq(Elevation.depth_for_count(3), 2)
+	assert_eq(Elevation.depth_for_count(99), Elevation.MAX_DEPTH)
+
+
+func test_depths_by_domain_keeps_each_domain_separate_where_depth_at_takes_the_maximum() -> void:
+	var zones: Array[InfluenceZone] = []
+	zones.append_array(_zones(Domain.Kind.STONE, 5, Vector2i.ZERO))
+	zones.append_array(_zones(Domain.Kind.FOREST, 2, Vector2i.ZERO))
+	var depths := Elevation.depths_by_domain(Vector2i.ZERO, zones)
+	assert_eq(depths[Domain.Kind.STONE], Elevation.MAX_DEPTH)
+	assert_eq(depths[Domain.Kind.FOREST], 1)
+	assert_eq(Elevation.depth_at(Vector2i.ZERO, zones), Elevation.MAX_DEPTH)
+
+
+func test_a_hex_nothing_covers_has_no_domains_at_all() -> void:
+	var zones: Array[InfluenceZone] = []
+	assert_true(Elevation.zone_counts(Vector2i.ZERO, zones).is_empty())
+	assert_true(Elevation.depths_by_domain(Vector2i.ZERO, zones).is_empty())
+	assert_eq(Elevation.depth_at(Vector2i.ZERO, zones), 0)
