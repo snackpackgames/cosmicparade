@@ -135,7 +135,7 @@ more than one system, and it arrives with its first real signal or field, never 
 When warranted, cross-system events go on one project-wide `SignalBus` — not one bus per
 area. Events internal to a system stay node-to-node and never appear on the bus.
 
-**`GameData`.** Fusion table (`adr/0004`), tile slots (`adr/0006`) and glaze lists
+**`GameData`.** Influence effect table (`adr/0004`, `adr/0017`), tile slots (`adr/0006`) and glaze lists
 (`adr/0007`) are all `.tres` data with no per-instance authoring, built on the
 `GameData` base.
 

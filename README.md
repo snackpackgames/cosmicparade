@@ -102,7 +102,8 @@ pinned here.
 | **Avatar** | The player's chosen look and skybox palette. Purely cosmetic. *Also used in the design for a summoned entity's manifested form — see open questions.* |
 | **Kit** | A starting loadout, one per domain: typed furniture and designs, fruit, seeds, early reward weighting. Chosen separately from the avatar. |
 | **Domain influence** | The area a furniture piece, shrine, or tile projects its domain over. Always qualified as *domain* influence to keep it distinct from the pageant currency. |
-| **Meld** | What happens when *different* domain influences overlap — produces a new type. |
+| **Influence effect** | What projected domain influence makes a hex show — an authored, purely visual effect (a shader or particle effect), read from a lookup table keyed by the domains covering the hex. `adr/0004`'s "fusion look" is an influence effect. |
+| **Meld** | What happens when *different* domain influences overlap — produces an authored influence effect, not a new mechanical type. |
 | **Burgeon** | What happens when the *same* domain influence overlaps itself — it intensifies. The counterpart to Meld. |
 | **Swell** | Spending adherents to enlarge your realm and raise its shrine capacity. |
 | **Adherents** | The currency. The audience a pageant wins you, spent on Swell. |
@@ -375,11 +376,14 @@ Decided; the document above reflects them. These are ADR candidates.
   only their avatar's starting domain. Domain-specific demands may layer on later as a
   bonus, once collections are wide enough to support them.
 - **Fusion looks are authored, not computed.** Each domain combination gets a
-  hand-picked colour and animated glaze pattern from a lookup table — never an
+  hand-picked **influence effect** (colour and animated glaze pattern) from a lookup table — never an
   arithmetic colour blend. Arithmetic mixing muddies precisely where the game needs
   clarity (a three-way overlap averages to brown), and flat bounded colour is what the
   mosaic art style is made of. The table is `.tres`-shaped, matching the project's
-  data-in-Resources convention.
+  data-in-Resources convention. The table is sparse and ordered, matching is greedy
+  and consuming (largest authored subset first, ties on file order), a one-domain
+  entry is the fallback, and depth amplifies an effect rather than selecting one
+  (`adr/0004`, `adr/0017`).
 - **A glaze's effect comes from a bond-gated ability list per entity.** Each entity
   owns a tiered list of glazes; giving gifts raises bond and unlocks the higher tiers,
   and the player chooses which unlocked glaze to apply when firing. This follows the
@@ -591,5 +595,6 @@ with. That points at retiring the Meld starting tile rather than defining it.
   | 0014 | Burgeon raises the ground |
   | 0015 | The realm grows by rings, then wings |
   | 0016 | Furniture is carried onto gated spaces |
+  | 0017 | Influence effects are matched greedily from a sparse table |
 - `documentation/plans/` — implementation plans for features in progress.
 - `notes/` — working material. Not authoritative.

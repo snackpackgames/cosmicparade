@@ -1,7 +1,7 @@
 class_name BoardMaterial
 extends RefCounted
-## The board's material. A deliberate placeholder for deferred art: the authored per-domain
-## look and the authored depth-4 "maxed" look both replace this. It only has to render.
+## The board's material. A deliberate placeholder for deferred art: the authored influence
+## effects and the authored ceiling effect replace this. It only has to render.
 
 const TEXTURE_SIZE := 8
 
