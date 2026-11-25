@@ -28,6 +28,7 @@ signal nothing_satisfies(criteria: Array[PlacementCriterion])
 const DEBUG_PIECE := preload("res://data/realm/furniture/mushroom_stool.tres")
 const STOCK_SHRINE := preload("res://data/realm/shrine/plain_shrine.tres")
 const ALTAR := preload("res://data/realm/altar/altar.tres")
+const INFLUENCE_EFFECTS := preload("res://data/realm/influence_effect_table/board.tres")
 ## The four authored wing figures, in order. Which one a wing Swell hands the player is a debug
 ## choice in M1, and the price never depends on it: all four are 6 or 7 hexes.
 ## https://github.com/snackpackgames/cosmicparade/issues/53
@@ -62,10 +63,12 @@ var _wing_figure := 0
 @onready var spill: SpillDisplay = $SpillDisplay
 @onready var requirements: RequirementList = %RequirementList
 @onready var readout: DebugReadout = $DebugReadout
+@onready var meld: MeldReadout = $MeldReadout
 
 
 func _ready() -> void:
 	readout.visible = OS.is_debug_build()
+	meld.visible = OS.is_debug_build()
 	state.place_altar(ALTAR)
 	board.build(state.geometry.hexes())
 	carry.configure(state)
@@ -74,6 +77,7 @@ func _ready() -> void:
 	carry.placed.connect(_on_placed.unbind(1))
 	carry.cancelled.connect(_on_cancelled)
 	cursor.targeted_hex_changed.connect(carry.aim)
+	cursor.targeted_hex_changed.connect(_on_hex_targeted)
 	_refresh_view()
 
 
@@ -374,6 +378,21 @@ func _rebuild_touched() -> void:
 func _refresh_view() -> void:
 	view.show_placements(state.placements, state.zones())
 	_refresh_readout()
+	_refresh_meld()
+
+
+func _on_hex_targeted(_hex: Vector2i) -> void:
+	_refresh_meld()
+
+
+# The probe reads committed zones, not the carry's candidate: it diagnoses the authored table
+# against the board as it stands, and previewing what a carried piece would do is already
+# `board.zones`' job. Silent outside a debug build, where the probe is hidden.
+# https://github.com/snackpackgames/cosmicparade/issues/110
+func _refresh_meld() -> void:
+	if not OS.is_debug_build():
+		return
+	meld.refresh(cursor.targeted_hex, state.zones(), INFLUENCE_EFFECTS)
 
 
 # Refreshed from the committed view and from every aim, so the numbers track a carry instead of
