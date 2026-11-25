@@ -62,3 +62,48 @@ static func _match_for(index: int, entry: InfluenceEffectEntry, depths: Dictiona
 			effect_match.intensity = depths[domain]
 			effect_match.intensity_domain = domain as Domain.Kind
 	return effect_match
+
+
+## The region of agreeing hexes around `hex`, flood-filled across neighbours whose effects agree
+## with it. Null when nothing covers `hex`. Terminates on its own: a hex nothing covers resolves
+## empty, and an empty resolution never agrees with a non-empty one, so the frontier cannot leave
+## the zones' coverage. Answers for coordinates in the void like any other.
+static func region_at(
+	hex: Vector2i, zones: Array[InfluenceZone], table: InfluenceEffectTable
+) -> MeldRegion:
+	var seed_resolution := resolve(hex, zones, table)
+	if seed_resolution.is_empty():
+		return null
+	var members: Array[Vector2i] = [hex]
+	var visited: Dictionary = {hex: true}
+	var frontier: Array[Vector2i] = [hex]
+	while not frontier.is_empty():
+		var current: Vector2i = frontier.pop_back()
+		for neighbor in HexCoordinates.neighbors(current):
+			if visited.has(neighbor):
+				continue
+			visited[neighbor] = true
+			if resolve(neighbor, zones, table).agrees_with(seed_resolution):
+				members.append(neighbor)
+				frontier.append(neighbor)
+	return MeldRegion.new(seed_resolution.effects(), members)
+
+
+## Every region the zones produce, each covered hex in exactly one. Candidates are the union of the
+## zones' coordinates: a hex no zone covers shows nothing and belongs to no region, which is also
+## what keeps the walk finite over an unbounded plane. Answers for off-board coordinates too, since
+## clipping to the board stays at consumption.
+static func regions(
+	zones: Array[InfluenceZone], table: InfluenceEffectTable
+) -> Array[MeldRegion]:
+	var result: Array[MeldRegion] = []
+	var assigned: Dictionary = {}
+	for zone in zones:
+		for hex in zone.coordinates():
+			if assigned.has(hex):
+				continue
+			var region := region_at(hex, zones, table)
+			for member in region.hexes:
+				assigned[member] = true
+			result.append(region)
+	return result
