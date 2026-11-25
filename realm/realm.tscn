@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://realm/realm.gd" id="1_realm"]
 [ext_resource type="Script" path="res://realm/realm_board.gd" id="2_board"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://realm/spill_display.gd" id="7_spill"]
 [ext_resource type="Script" path="res://realm/requirement_list.gd" id="8_list"]
 [ext_resource type="Script" path="res://realm/debug_readout.gd" id="9_readout"]
+[ext_resource type="Script" path="res://realm/meld_readout.gd" id="10_meld"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -54,6 +55,9 @@ script = ExtResource("8_list")
 
 [node name="DebugReadout" type="CanvasLayer" parent="."]
 script = ExtResource("9_readout")
+
+[node name="MeldReadout" type="CanvasLayer" parent="."]
+script = ExtResource("10_meld")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(0.819152, -0.3687, 0.43944, 0, 0.766044, 0.642788, -0.573576, -0.52654, 0.627507, 4.4, 8.0, 7.5)
