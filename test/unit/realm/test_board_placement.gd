@@ -61,3 +61,48 @@ func test_a_placement_whose_piece_has_no_zone_source_projects_null() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/37 — null, never an empty zone.
 	var placement := BoardPlacement.new(BoardPiece.new(), 0, [Vector2i.ZERO] as Array[Vector2i])
 	assert_null(placement.zone())
+
+
+func _fruit(domain: Domain.Kind) -> Fruit:
+	var fruit := Fruit.new()
+	fruit.domain = domain
+	return fruit
+
+
+func _shrine_piece() -> Shrine:
+	var piece := Shrine.new()
+	var vessel := OfferingVessel.new()
+	vessel.reach = 2
+	piece.zone_source = vessel
+	return piece
+
+
+func test_a_placement_built_from_a_vessel_piece_gets_its_own_vessel() -> void:
+	var piece := _shrine_piece()
+	var first := BoardPlacement.new(piece, 0, [Vector2i.ZERO] as Array[Vector2i])
+	var second := BoardPlacement.new(piece, 0, [Vector2i(2, 0)] as Array[Vector2i])
+	first.offer(_fruit(Domain.Kind.FOREST))
+	assert_true(first.holds_offering())
+	assert_false(second.holds_offering(), "one authored piece, two vessels")
+	assert_false(piece.zone_source.holds_offering(), "the authored resource stays unfed")
+
+
+func test_relocating_carries_the_vessel_and_its_contents() -> void:
+	var placement := BoardPlacement.new(
+		_shrine_piece(), 0, [Vector2i.ZERO] as Array[Vector2i]
+	)
+	placement.offer(_fruit(Domain.Kind.WETLAND))
+	var moved := placement.relocated(0, [Vector2i(1, 0)] as Array[Vector2i])
+	assert_true(moved.holds_offering(), "rearranging is free (adr/0009)")
+	assert_eq(moved.zone().domain, Domain.Kind.WETLAND)
+
+
+func test_a_placement_whose_piece_has_no_zone_source_holds_no_vessel() -> void:
+	var placement := BoardPlacement.new(
+		BoardPiece.new(), 0, [Vector2i.ZERO] as Array[Vector2i]
+	)
+	assert_false(placement.can_hold_offering())
+	assert_false(placement.holds_offering())
+	placement.offer(_fruit(Domain.Kind.FOREST))
+	placement.empty_vessel()
+	assert_null(placement.zone())

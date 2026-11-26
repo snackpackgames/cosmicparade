@@ -13,7 +13,7 @@ func test_a_shrine_is_one_hex_with_no_criteria() -> void:
 	var shrine := _authored()
 	assert_eq(shrine.shape, Footprint.Shape.SINGLE)
 	assert_eq(shrine.criteria.size(), 0)
-	assert_eq(Shrine.ZONE_RADIUS, 2)
+	assert_eq((shrine.zone_source as OfferingVessel).reach, 2)
 
 
 func test_a_shrine_is_a_board_piece() -> void:

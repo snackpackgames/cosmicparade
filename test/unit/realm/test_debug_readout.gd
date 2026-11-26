@@ -15,6 +15,7 @@ func _fruit(domain: Domain.Kind) -> Fruit:
 func _shrine() -> Shrine:
 	var shrine := Shrine.new()
 	shrine.piece_name = "test shrine"
+	shrine.zone_source = OfferingVessel.new()
 	return shrine
 
 
@@ -30,9 +31,9 @@ func _state() -> RealmState:
 	return RealmState.new(RealmGeometry.new())
 
 
-func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> ShrinePlacement:
-	var placement := ShrinePlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
-	placement.offering = _fruit(domain)
+func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> BoardPlacement:
+	var placement := BoardPlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
+	placement.offer(_fruit(domain))
 	state.place(placement)
 	return placement
 
@@ -53,11 +54,11 @@ func _stool() -> Furniture:
 
 
 # A fed shrine standing on the board, with a Forest offering so the Altar reads "Forest".
-func _fed_shrine(realm: Realm, hex: Vector2i) -> ShrinePlacement:
-	var placement := ShrinePlacement.new(
+func _fed_shrine(realm: Realm, hex: Vector2i) -> BoardPlacement:
+	var placement := BoardPlacement.new(
 		load("res://data/realm/shrine/plain_shrine.tres"), 0, [hex] as Array[Vector2i]
 	)
-	placement.offering = load("res://data/realm/fruit/moss_plum.tres")
+	placement.offer(load("res://data/realm/fruit/moss_plum.tres"))
 	realm.state.place(placement)
 	return placement
 

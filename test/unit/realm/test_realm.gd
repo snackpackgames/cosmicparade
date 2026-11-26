@@ -25,9 +25,9 @@ func _moss_plum() -> Fruit:
 	return load("res://data/realm/fruit/moss_plum.tres")
 
 
-func _fed_shrine(realm: Realm, hex: Vector2i) -> ShrinePlacement:
-	var placement := ShrinePlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
-	placement.offering = _moss_plum()
+func _fed_shrine(realm: Realm, hex: Vector2i) -> BoardPlacement:
+	var placement := BoardPlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
+	placement.offer(_moss_plum())
 	realm.state.place(placement)
 	return placement
 
@@ -306,7 +306,7 @@ func test_lifting_from_an_empty_stock_does_nothing() -> void:
 	var realm := await _realm()
 	for hex in [Vector2i(-2, 0), Vector2i(2, 0)]:
 		realm.state.place(
-			ShrinePlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
+			BoardPlacement.new(_shrine_piece(), 0, [hex] as Array[Vector2i])
 		)
 	assert_eq(realm.state.shrines_in_stock(), 0)
 
@@ -321,7 +321,7 @@ func test_a_shrine_lifted_from_stock_lands_as_a_shrine_placement() -> void:
 	realm.lift_from_stock()
 	realm.carry.aim(Vector2i(2, 0))
 	realm.carry.place()
-	assert_eq(realm.state.shrine_placements().size(), 1)
+	assert_eq(realm.state.vessel_placements().size(), 1)
 	assert_eq(realm.state.shrines_in_stock(), 1)
 
 
@@ -540,7 +540,7 @@ func test_emptying_a_vessel_drops_its_ground_and_leaves_the_shrine_standing() ->
 	realm.empty_vessel_under_cursor()
 
 	assert_eq(_top(realm, Vector2i(-2, 0)), 0.0, "the ground it raised drops at once")
-	assert_eq(realm.state.shrine_placements().size(), 2, "both shrines keep standing")
+	assert_eq(realm.state.vessel_placements().size(), 2, "both shrines keep standing")
 	assert_eq(realm.state.shrine_zones().size(), 1, "one vessel is empty")
 
 	realm.cursor.aim_at(Vector2i(1, 0))
