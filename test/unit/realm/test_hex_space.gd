@@ -1,11 +1,24 @@
 extends GutTest
 ## A single hex space: a prism from its own top face down to the board base.
 
+const SCENE := preload("res://realm/hex_space.tscn")
+
+
 func _space(hex: Vector2i, depth: int) -> HexSpace:
-	var space: HexSpace = add_child_autofree(HexSpace.new())
+	var space: HexSpace = add_child_autofree(SCENE.instantiate())
 	space.configure(hex, BoardMaterial.create())
 	space.set_depth(depth)
 	return space
+
+
+# The scene carries the structure, so the two nodes and the layer exist before anything
+# configures the space. https://github.com/snackpackgames/cosmicparade/issues/148
+func test_the_scene_brings_its_own_body_and_mesh() -> void:
+	var space: HexSpace = add_child_autofree(SCENE.instantiate())
+	assert_not_null(space.get_node_or_null("MeshInstance3D"), "the mesh is authored, not built")
+	assert_not_null(space.get_node_or_null("CollisionShape3D"), "and so is the shape's node")
+	assert_eq(space.collision_layer, 1, "realm_space is bit 1, set in the inspector")
+	assert_eq(space.collision_mask, 0, "the board detects nothing")
 
 
 func test_it_is_a_passive_target_on_realm_space() -> void:

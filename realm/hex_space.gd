@@ -3,33 +3,37 @@ class_name HexSpace
 extends StaticBody3D
 ## A single hex space: a prism from its own top face down to the board base.
 ##
-## `@tool` so `RealmBoard`'s editor preview can build these. It declares no lifecycle callbacks,
-## so the annotation changes no behaviour -- it only lets the editor run `configure` and
-## `set_depth` when the board draws itself there.
-## https://github.com/snackpackgames/cosmicparade/issues/146
+## Authored as `hex_space.tscn`, so the two children and the `realm_space` layer are in the
+## scene tree where the inspector can show them, rather than assembled in `configure`. What
+## stays in code is what is derived: the extent the board draws (`adr/0015`) and this prism's
+## height, which follows the influence on the hex (`adr/0014`).
+## https://github.com/snackpackgames/cosmicparade/issues/148
+##
+## `@tool` so `RealmBoard`'s editor preview can build these
+## (https://github.com/snackpackgames/cosmicparade/issues/146). It is load-bearing now rather
+## than inert: the two `@onready` references below are only assigned if the editor runs `_ready`,
+## and without them a previewed space would reach for a null mesh.
+##
+## Opening this scene on its own shows the structure and an empty body, not a hex. Drawing one
+## would mean a `@tool` script writing `mesh` onto a node the scene owns, which a save would
+## then bake into `hex_space.tscn` -- authored geometry that could drift from what the runtime
+## derives, which is the thing `adr/0014` is for. The board preview is where hexes are looked at.
 
 const BASE_Y := -2.0
 const UV_SCALE := 0.5
 
 var hex: Vector2i
 
-var _mesh_instance: MeshInstance3D
-var _collision_shape: CollisionShape3D
 var _top_height := 0.0
+
+@onready var _mesh_instance: MeshInstance3D = %MeshInstance3D
+@onready var _collision_shape: CollisionShape3D = %CollisionShape3D
 
 
 func configure(space_hex: Vector2i, material: Material) -> void:
 	hex = space_hex
-	collision_layer = 1
-	collision_mask = 0
 	position = HexCoordinates.center_of(hex)
-	_mesh_instance = MeshInstance3D.new()
-	_mesh_instance.name = "MeshInstance3D"
 	_mesh_instance.material_override = material
-	add_child(_mesh_instance)
-	_collision_shape = CollisionShape3D.new()
-	_collision_shape.name = "CollisionShape3D"
-	add_child(_collision_shape)
 
 
 func set_depth(depth: int) -> void:
