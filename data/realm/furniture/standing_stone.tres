@@ -1,18 +1,23 @@
-[gd_resource type="Resource" script_class="Furniture" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="Furniture" load_steps=7 format=3]
 
 [ext_resource type="Script" uid="uid://desvi7d7hew3l" path="res://realm/furniture.gd" id="1_furniture"]
 [ext_resource type="Script" path="res://realm/placement_criterion.gd" id="2_crit"]
 [ext_resource type="Script" path="res://realm/board_position_criterion.gd" id="2_pos"]
+[ext_resource type="Script" path="res://realm/domain_projection.gd" id="9_proj"]
 
 [sub_resource type="Resource" id="2_pos_inst"]
 script = ExtResource("2_pos")
 require_edge = true
 
+[sub_resource type="Resource" id="9_proj_inst"]
+script = ExtResource("9_proj")
+domain = 3
+reach = 2
+
 [resource]
 script = ExtResource("1_furniture")
 piece_name = "Standing Stone"
-domain = 3
+zone_source = SubResource("9_proj_inst")
 shape = 0
 anchor = Vector2i(0, 0)
-zone_radius = 2
 criteria = Array[ExtResource("2_crit")]([SubResource("2_pos_inst")])

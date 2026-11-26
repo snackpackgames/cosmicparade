@@ -16,12 +16,17 @@ extends GameData
 
 @export var criteria: Array[PlacementCriterion] = []
 
-
-## What this piece projects over the hexes it occupies, or `null` for a piece that projects
-## nothing. A null is not an empty zone: #37's depth tally must not see an entry for a piece
-## that contributes none, and null is the only return that cannot be miscounted. The base
-## answers for the Altar, which projects nothing at all.
+## What this piece projects over the hexes it occupies; at most one per piece. Absent for a piece
+## that projects nothing, and a placeable then contributes `null`, never an empty zone: #37's
+## depth tally counts zones, so an empty entry would be miscounted as coverage.
 ## https://github.com/snackpackgames/cosmicparade/issues/37
-## https://github.com/snackpackgames/cosmicparade/issues/77
-func zone_for(_hexes: Array[Vector2i]) -> InfluenceZone:
-	return null
+## https://github.com/snackpackgames/cosmicparade/issues/135
+@export var zone_source: ZoneSource
+
+## The capability to read influence; at most one per piece. Its presence is the capability.
+## https://github.com/snackpackgames/cosmicparade/issues/128
+@export var reading: InfluenceReading
+
+
+func reads_influence() -> bool:
+	return reading != null

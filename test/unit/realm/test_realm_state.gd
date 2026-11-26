@@ -37,9 +37,11 @@ func _shrine() -> Shrine:
 func _piece(domain: Domain.Kind, radius: int) -> Furniture:
 	var piece := Furniture.new()
 	piece.piece_name = "test piece"
-	piece.domain = domain
+	var projection := DomainProjection.new()
+	projection.domain = domain
+	projection.reach = radius
+	piece.zone_source = projection
 	piece.shape = Footprint.Shape.SINGLE
-	piece.zone_radius = radius
 	return piece
 
 

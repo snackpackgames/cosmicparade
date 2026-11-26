@@ -22,8 +22,10 @@ func _flank_the_centre_line_with_forest(state: RealmState) -> void:
 func _piece(criteria: Array[PlacementCriterion]) -> Furniture:
 	var piece := Furniture.new()
 	piece.shape = Footprint.Shape.SINGLE
-	piece.domain = Domain.Kind.GALE
-	piece.zone_radius = 1
+	var projection := DomainProjection.new()
+	projection.domain = Domain.Kind.GALE
+	projection.reach = 1
+	piece.zone_source = projection
 	piece.criteria = criteria
 	return piece
 

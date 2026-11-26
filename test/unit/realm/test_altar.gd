@@ -15,6 +15,9 @@ func test_the_altar_projects_nothing() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/77 — no domain, no radius,
 	# no entry in #37's tally. Adding either is a design change, not a feature.
 	var altar: Altar = load(ALTAR_PATH)
-	assert_null(altar.zone_for([Vector2i.ZERO, Vector2i(1, 0), Vector2i(1, -1)] as Array[Vector2i]))
-	assert_false("domain" in altar)
-	assert_false("zone_radius" in altar)
+	assert_null(altar.zone_source)
+
+
+func test_the_altar_reads_influence() -> void:
+	var altar: Altar = load(ALTAR_PATH)
+	assert_true(altar.reads_influence())

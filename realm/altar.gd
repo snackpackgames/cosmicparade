@@ -1,6 +1,7 @@
 class_name Altar
 extends BoardPiece
-## The Altar: a triangle-three gated on a level footprint, projecting nothing. It adds no members
-## on purpose — no domain and no zone radius — so it inherits the null `zone_for` and can neither
-## enter the influence tally nor read its own contribution.
+## The Altar: a triangle-three gated on a level footprint. It adds no members on purpose. It
+## projects nothing because it authors no `zone_source`, and it reads influence because it
+## authors an `InfluenceReading`.
 ## https://github.com/snackpackgames/cosmicparade/issues/77
+## https://github.com/snackpackgames/cosmicparade/issues/128

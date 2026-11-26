@@ -24,8 +24,10 @@ func relocated(new_orientation: int, new_hexes: Array[Vector2i]) -> BoardPlaceme
 
 
 ## Derived on demand, never stored: one zone whatever the footprint, and `null` for a piece that
-## projects nothing. Delegated to the piece rather than branched on here, so the board stays
-## ignorant of what is standing on it.
+## projects nothing. Resolved from the piece's one zone source, so the board stays ignorant of
+## what is standing on it.
 ## https://github.com/snackpackgames/cosmicparade/issues/59
 func zone() -> InfluenceZone:
-	return piece.zone_for(hexes)
+	if piece.zone_source == null:
+		return null
+	return piece.zone_source.zone_over(hexes)
