@@ -15,6 +15,14 @@ func _board(zones: Array[InfluenceZone]) -> RealmBoard:
 	return board
 
 
+# The board instantiates `hex_space.tscn` rather than the bare script, so a hex authored in the
+# editor is the hex the board builds. https://github.com/snackpackgames/cosmicparade/issues/148
+func test_every_space_it_builds_is_an_instance_of_the_hex_scene() -> void:
+	var board := _board([] as Array[InfluenceZone])
+	for hex: Vector2i in HEXES:
+		assert_eq(board.hex_space(hex).scene_file_path, "res://realm/hex_space.tscn")
+
+
 func test_it_builds_one_hex_space_per_coordinate_it_was_given() -> void:
 	var board := _board([] as Array[InfluenceZone])
 	for hex: Vector2i in HEXES:

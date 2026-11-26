@@ -11,6 +11,8 @@ extends Node3D
 ## the carry and connects six signals -- none of which belongs in the editor.
 ## https://github.com/snackpackgames/cosmicparade/issues/146
 
+const HEX_SPACE := preload("res://realm/hex_space.tscn")
+
 ## Draws the board in the editor viewport. Editor-only in both directions: it does nothing at
 ## runtime, and the spaces it makes are never saved, because the scene must keep holding zero
 ## authored hexes or the preview could drift from what the runtime generates.
@@ -93,11 +95,14 @@ func _preview_hexes() -> Array[Vector2i]:
 	return geometry.hexes()
 
 
+## Adds one space from `hex_space.tscn` (https://github.com/snackpackgames/cosmicparade/issues/148).
+## `add_child` comes first on purpose: the space reaches its own mesh and collision shape through
+## `@onready`, so neither `configure` nor `set_depth` can run before it is in the tree.
 func _add_space(hex: Vector2i) -> void:
 	if _material == null:
 		_material = BoardMaterial.create()
-	var space := HexSpace.new()
-	space.configure(hex, _material)
+	var space: HexSpace = HEX_SPACE.instantiate()
 	add_child(space)
+	space.configure(hex, _material)
 	_spaces[hex] = space
 	space.set_depth(Elevation.depth_at(hex, zones))
