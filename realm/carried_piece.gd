@@ -53,8 +53,6 @@ func commit(target: Vector2i, orientation: int, state: RealmState) -> void:
 	var hexes := hexes_at(target, orientation)
 	if origin != null:
 		state.place(origin.relocated(orientation, hexes))
-	elif piece is Shrine:
-		state.place(ShrinePlacement.new(piece, orientation, hexes))
 	else:
 		state.place(BoardPlacement.new(piece, orientation, hexes))
 

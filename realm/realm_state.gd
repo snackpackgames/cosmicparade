@@ -52,17 +52,17 @@ func zones() -> Array[InfluenceZone]:
 ## https://github.com/snackpackgames/cosmicparade/issues/79
 func shrine_zones() -> Array[InfluenceZone]:
 	var result: Array[InfluenceZone] = []
-	for placement in shrine_placements():
+	for placement in vessel_placements():
 		var zone := placement.zone()
 		if zone != null:
 			result.append(zone)
 	return result
 
 
-func shrine_placements() -> Array[ShrinePlacement]:
-	var result: Array[ShrinePlacement] = []
+func vessel_placements() -> Array[BoardPlacement]:
+	var result: Array[BoardPlacement] = []
 	for placement in placements:
-		if placement is ShrinePlacement:
+		if placement.can_hold_offering():
 			result.append(placement)
 	return result
 
@@ -70,7 +70,7 @@ func shrine_placements() -> Array[ShrinePlacement]:
 ## Shrines the player owns but has not placed. Derived: capacity minus what stands on the board.
 ## https://github.com/snackpackgames/cosmicparade/issues/74
 func shrines_in_stock() -> int:
-	return shrine_capacity - shrine_placements().size()
+	return shrine_capacity - vessel_placements().size()
 
 
 ## Stands the Altar on the origin in its default orientation, which exists at every core radius

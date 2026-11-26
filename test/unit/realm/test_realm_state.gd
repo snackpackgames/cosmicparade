@@ -31,6 +31,7 @@ func _fruit(domain: Domain.Kind) -> Fruit:
 func _shrine() -> Shrine:
 	var shrine := Shrine.new()
 	shrine.piece_name = "test shrine"
+	shrine.zone_source = OfferingVessel.new()
 	return shrine
 
 
@@ -54,9 +55,9 @@ func _furniture_at(hex: Vector2i) -> BoardPlacement:
 
 
 # Places a fed shrine at `hex` and returns its placement.
-func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> ShrinePlacement:
-	var placement := ShrinePlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
-	placement.offering = _fruit(domain)
+func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> BoardPlacement:
+	var placement := BoardPlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
+	placement.offer(_fruit(domain))
 	state.place(placement)
 	return placement
 
@@ -104,7 +105,7 @@ func test_placements_touching_finds_a_piece_overlapping_the_hexes_at_all() -> vo
 func test_shrine_zones_are_only_the_shrines_and_only_the_fed_ones() -> void:
 	var state := _state()
 	_place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
-	state.place(ShrinePlacement.new(_shrine(), 0, [Vector2i(2, 0)] as Array[Vector2i]))
+	state.place(BoardPlacement.new(_shrine(), 0, [Vector2i(2, 0)] as Array[Vector2i]))
 	state.place(_furniture_at(Vector2i(0, 2)))
 	assert_eq(state.zones().size(), 2)
 	assert_eq(state.shrine_zones().size(), 1)
@@ -119,7 +120,7 @@ func test_emptying_a_vessel_drops_the_ground_and_leaves_the_piece_standing() -> 
 	state.place(_furniture_at(Vector2i.ZERO))
 	assert_eq(Elevation.depth_at(Vector2i.ZERO, state.zones()), 1)
 
-	shrine.offering = null
+	shrine.empty_vessel()
 
 	assert_eq(Elevation.depth_at(Vector2i.ZERO, state.zones()), 0)
 	assert_eq(state.placements.size(), 2)
@@ -148,7 +149,7 @@ func test_shrine_placements_are_only_the_shrines() -> void:
 	var state := _state()
 	_place_shrine(state, Vector2i(-2, 0), Domain.Kind.FOREST)
 	state.place(_stool_at(Vector2i(0, 2)))
-	assert_eq(state.shrine_placements().size(), 1)
+	assert_eq(state.vessel_placements().size(), 1)
 	assert_eq(state.placements.size(), 2)
 
 

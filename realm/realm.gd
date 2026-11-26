@@ -190,11 +190,11 @@ func take_ring() -> void:
 func empty_vessel_under_cursor() -> void:
 	if carry.is_carrying():
 		return
-	var placement := state.occupant_at(cursor.targeted_hex) as ShrinePlacement
-	if placement == null or placement.offering == null:
+	var placement := state.occupant_at(cursor.targeted_hex)
+	if placement == null or not placement.holds_offering():
 		return
 	var lapsed := placement.zone()
-	placement.offering = null
+	placement.empty_vessel()
 	board.zones = state.zones()
 	board.rebuild(lapsed.coordinates())
 	_refresh_view()
@@ -428,10 +428,8 @@ func _carried_shrine_zone() -> InfluenceZone:
 	if not carry.is_carrying():
 		return null
 	var carried := carry.carried as CarriedPiece
-	if carried == null or not (carried.piece is Shrine):
+	if carried == null or carried.origin == null or not carried.origin.can_hold_offering():
 		return null
-	var origin := carried.origin as ShrinePlacement
-	if origin == null:
-		return null
+	var origin := carried.origin
 	var hexes := carried.hexes_at(carry.target, carry.orientation)
 	return origin.relocated(carry.orientation, hexes).zone()

@@ -69,10 +69,11 @@ func test_moving_a_fed_shrine_does_not_empty_its_vessel() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/75
 	var state := RealmState.new(RealmGeometry.new())
 	var shrine := Shrine.new()
+	shrine.zone_source = OfferingVessel.new()
 	var fruit := Fruit.new()
 	fruit.domain = Domain.Kind.WETLAND
-	var origin := ShrinePlacement.new(shrine, 0, [Vector2i.ZERO] as Array[Vector2i])
-	origin.offering = fruit
+	var origin := BoardPlacement.new(shrine, 0, [Vector2i.ZERO] as Array[Vector2i])
+	origin.offer(fruit)
 	state.place(origin)
 
 	var carried := CarriedPiece.new(shrine, Vector2i.ZERO, origin)
@@ -89,5 +90,7 @@ func test_a_shrine_from_stock_lands_as_a_shrine_placement() -> void:
 	# projects — or a placed shrine would be invisible to the board as a shrine.
 	# https://github.com/snackpackgames/cosmicparade/issues/74
 	var state := RealmState.new(RealmGeometry.new())
-	CarriedPiece.new(Shrine.new(), Vector2i.ZERO, null).commit(Vector2i.ZERO, 0, state)
-	assert_eq(state.shrine_placements().size(), 1)
+	var shrine := Shrine.new()
+	shrine.zone_source = OfferingVessel.new()
+	CarriedPiece.new(shrine, Vector2i.ZERO, null).commit(Vector2i.ZERO, 0, state)
+	assert_eq(state.vessel_placements().size(), 1)

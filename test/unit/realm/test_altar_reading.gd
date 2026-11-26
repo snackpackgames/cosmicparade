@@ -12,6 +12,7 @@ func _fruit(domain: Domain.Kind) -> Fruit:
 func _shrine() -> Shrine:
 	var shrine := Shrine.new()
 	shrine.piece_name = "test shrine"
+	shrine.zone_source = OfferingVessel.new()
 	return shrine
 
 
@@ -38,9 +39,9 @@ func _state() -> RealmState:
 	return RealmState.new(RealmGeometry.new())
 
 
-func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> ShrinePlacement:
-	var placement := ShrinePlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
-	placement.offering = _fruit(domain)
+func _place_shrine(state: RealmState, hex: Vector2i, domain: Domain.Kind) -> BoardPlacement:
+	var placement := BoardPlacement.new(_shrine(), 0, [hex] as Array[Vector2i])
+	placement.offer(_fruit(domain))
 	state.place(placement)
 	return placement
 
@@ -86,6 +87,6 @@ func test_a_lapsed_shrine_in_range_reads_as_nothing() -> void:
 	var state := _state()
 	state.place_altar(_altar())
 	var shrine := _place_shrine(state, Vector2i(-1, 0), Domain.Kind.FOREST)
-	shrine.offering = null
+	shrine.empty_vessel()
 	assert_true(state.altar_reading().is_empty())
 	assert_eq(state.altar_reading().count_for(Domain.Kind.FOREST), 0)
