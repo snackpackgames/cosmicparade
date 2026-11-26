@@ -14,10 +14,10 @@ extends StaticBody3D
 ## than inert: the two `@onready` references below are only assigned if the editor runs `_ready`,
 ## and without them a previewed space would reach for a null mesh.
 ##
-## Opening this scene on its own shows the structure and an empty body, not a hex. Drawing one
-## would mean a `@tool` script writing `mesh` onto a node the scene owns, which a save would
-## then bake into `hex_space.tscn` -- authored geometry that could drift from what the runtime
-## derives, which is the thing `adr/0014` is for. The board preview is where hexes are looked at.
+## Opening this scene on its own draws a flat hex, so there is something to look at. The mesh,
+## the shape and the material are all generated, so none of them may reach the `.tscn`: a hex's
+## height is derived from the influence on it (`adr/0014`) and an authored copy could drift from
+## what the runtime makes. `_notification` drops them around a save for exactly that reason.
 
 const BASE_Y := -2.0
 const UV_SCALE := 0.5
@@ -25,18 +25,45 @@ const UV_SCALE := 0.5
 var hex: Vector2i
 
 var _top_height := 0.0
+var _depth := 0
+var _material: Material
 
 @onready var _mesh_instance: MeshInstance3D = %MeshInstance3D
 @onready var _collision_shape: CollisionShape3D = %CollisionShape3D
 
 
+## Draws a flat hex, in the board's placeholder material, when `hex_space.tscn` is itself the
+## scene being edited. A hex on a board is never the edited scene -- `realm.tscn` is -- so the
+## board stays the only thing that configures its own spaces.
+## https://github.com/snackpackgames/cosmicparade/issues/148
+func _ready() -> void:
+	if Engine.is_editor_hint() and get_tree().edited_scene_root == self:
+		configure(Vector2i.ZERO, BoardMaterial.create())
+		set_depth(0)
+
+
+## Keeps the generated geometry out of any scene file that holds this node. Godot sends these
+## two notifications around an editor save for this purpose: the mesh, shape and material go
+## away before the file is written and come back after, so the `.tscn` on disk carries the empty
+## body it declares and the viewport still shows a hex.
+func _notification(what: int) -> void:
+	if not Engine.is_editor_hint():
+		return
+	if what == NOTIFICATION_EDITOR_PRE_SAVE:
+		_clear_generated_state()
+	elif what == NOTIFICATION_EDITOR_POST_SAVE:
+		_restore_generated_state()
+
+
 func configure(space_hex: Vector2i, material: Material) -> void:
 	hex = space_hex
 	position = HexCoordinates.center_of(hex)
+	_material = material
 	_mesh_instance.material_override = material
 
 
 func set_depth(depth: int) -> void:
+	_depth = depth
 	_top_height = Elevation.height_for_depth(depth)
 	_mesh_instance.mesh = _build_mesh()
 	var shape := ConvexPolygonShape3D.new()
@@ -50,6 +77,21 @@ func set_depth(depth: int) -> void:
 
 func top_height() -> float:
 	return _top_height
+
+
+## Drops everything this node generates, so a scene save writes the empty body the `.tscn`
+## declares rather than a snapshot of one depth.
+func _clear_generated_state() -> void:
+	_mesh_instance.mesh = null
+	_mesh_instance.material_override = null
+	_collision_shape.shape = null
+
+
+## Puts back what `_clear_generated_state` dropped, at the depth this space already had, so the
+## viewport looks the same after a save as before it.
+func _restore_generated_state() -> void:
+	_mesh_instance.material_override = _material
+	set_depth(_depth)
 
 
 func _build_mesh() -> ArrayMesh:

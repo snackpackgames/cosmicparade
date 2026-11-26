@@ -21,6 +21,30 @@ func test_the_scene_brings_its_own_body_and_mesh() -> void:
 	assert_eq(space.collision_mask, 0, "the board detects nothing")
 
 
+# The editor preview generates a mesh, a shape and a material onto nodes the scene owns, so
+# all three are dropped before a save writes the file and rebuilt after. Authored geometry
+# could drift from the height the runtime derives (`adr/0014`), so none of it may land on disk.
+# https://github.com/snackpackgames/cosmicparade/issues/148
+func test_nothing_it_generates_survives_into_a_saved_scene() -> void:
+	var space := _space(Vector2i.ZERO, 2)
+	var mesh_instance: MeshInstance3D = space.get_node("MeshInstance3D")
+	space._clear_generated_state()
+	assert_null(mesh_instance.mesh, "no mesh is written")
+	assert_null(mesh_instance.material_override, "no material either")
+	assert_null(space.get_node("CollisionShape3D").shape, "nor the collision prism")
+
+
+func test_the_geometry_comes_back_at_the_depth_it_had_before_the_save() -> void:
+	var space := _space(Vector2i.ZERO, 2)
+	var mesh_instance: MeshInstance3D = space.get_node("MeshInstance3D")
+	var material: Material = mesh_instance.material_override
+	space._clear_generated_state()
+	space._restore_generated_state()
+	assert_not_null(mesh_instance.mesh, "the mesh is rebuilt")
+	assert_eq(mesh_instance.material_override, material, "the same material comes back")
+	assert_almost_eq(space.top_height(), Elevation.height_for_depth(2), 0.0001, "same depth")
+
+
 func test_it_is_a_passive_target_on_realm_space() -> void:
 	var space := _space(Vector2i.ZERO, 0)
 	assert_eq(space.collision_layer, 1, "realm_space is bit 1")
