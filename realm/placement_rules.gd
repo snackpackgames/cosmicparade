@@ -39,7 +39,13 @@ static func verdict(
 static func zone_for(
 	piece: BoardPiece, orientation: int, target: Vector2i, grab_offset: Vector2i
 ) -> InfluenceZone:
-	return piece.zone_for(Footprint.occupied(piece.shape, orientation, target, grab_offset))
+	return zone_for_hexes(piece, Footprint.occupied(piece.shape, orientation, target, grab_offset))
+
+
+static func zone_for_hexes(piece: BoardPiece, hexes: Array[Vector2i]) -> InfluenceZone:
+	if piece.zone_source == null:
+		return null
+	return piece.zone_source.zone_over(hexes)
 
 
 ## One sweep over every board hex and all six orientations, run on lift. Records which criteria
@@ -90,7 +96,7 @@ static func _context_for(
 	piece: BoardPiece, occupied: Array[Vector2i], state: RealmState
 ) -> PlacementContext:
 	var zones := state.zones()
-	var candidate := piece.zone_for(occupied)
+	var candidate := zone_for_hexes(piece, occupied)
 	if candidate != null:
 		zones.append(candidate)
 	return PlacementContext.new(state, occupied, zones)

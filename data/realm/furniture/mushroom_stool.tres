@@ -1,11 +1,16 @@
-[gd_resource type="Resource" script_class="Furniture" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="Furniture" load_steps=4 format=3]
 
 [ext_resource type="Script" uid="uid://desvi7d7hew3l" path="res://realm/furniture.gd" id="1_furniture"]
+[ext_resource type="Script" path="res://realm/domain_projection.gd" id="9_proj"]
+
+[sub_resource type="Resource" id="9_proj_inst"]
+script = ExtResource("9_proj")
+domain = 0
+reach = 1
 
 [resource]
 script = ExtResource("1_furniture")
 piece_name = "Mushroom Stool"
-domain = 0
+zone_source = SubResource("9_proj_inst")
 shape = 0
 anchor = Vector2i(0, 0)
-zone_radius = 1

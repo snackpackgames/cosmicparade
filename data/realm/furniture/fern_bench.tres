@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="Furniture" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="Furniture" load_steps=9 format=3]
 
 [ext_resource type="Script" uid="uid://desvi7d7hew3l" path="res://realm/furniture.gd" id="1_furniture"]
 [ext_resource type="Script" path="res://realm/placement_criterion.gd" id="4_crit"]
 [ext_resource type="Script" path="res://realm/domain_influence_criterion.gd" id="2_inf"]
 [ext_resource type="Script" path="res://realm/level_footprint_criterion.gd" id="3_lvl"]
+[ext_resource type="Script" path="res://realm/domain_projection.gd" id="9_proj"]
 
 [sub_resource type="Resource" id="2_inf_inst"]
 script = ExtResource("2_inf")
@@ -14,11 +15,15 @@ minimum = 2
 script = ExtResource("3_lvl")
 
 
+[sub_resource type="Resource" id="9_proj_inst"]
+script = ExtResource("9_proj")
+domain = 0
+reach = 1
+
 [resource]
 script = ExtResource("1_furniture")
 piece_name = "Fern Bench"
-domain = 0
+zone_source = SubResource("9_proj_inst")
 shape = 2
 anchor = Vector2i(1, 0)
-zone_radius = 1
 criteria = Array[ExtResource("4_crit")]([SubResource("2_inf_inst"), SubResource("3_lvl_inst")])

@@ -98,8 +98,10 @@ func test_several_failing_criteria_are_all_named_at_once() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/62 — never one at a time.
 	var piece := Furniture.new()
 	piece.shape = Footprint.Shape.PAIR
-	piece.domain = Domain.Kind.GALE
-	piece.zone_radius = 1
+	var projection := DomainProjection.new()
+	projection.domain = Domain.Kind.GALE
+	projection.reach = 1
+	piece.zone_source = projection
 	var influence := DomainInfluenceCriterion.new()
 	influence.domain = Domain.Kind.FLAME
 	influence.minimum = 1

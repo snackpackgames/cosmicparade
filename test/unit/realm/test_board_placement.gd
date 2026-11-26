@@ -5,8 +5,10 @@ extends GutTest
 func _piece(shape: Footprint.Shape, domain: Domain.Kind, radius: int) -> Furniture:
 	var piece := Furniture.new()
 	piece.shape = shape
-	piece.domain = domain
-	piece.zone_radius = radius
+	var projection := DomainProjection.new()
+	projection.domain = domain
+	projection.reach = radius
+	piece.zone_source = projection
 	return piece
 
 
@@ -53,3 +55,9 @@ func test_the_state_omits_a_placement_that_projects_nothing() -> void:
 		BoardPlacement.new(_single(Domain.Kind.GALE, 1), 0, [Vector2i(2, 0)] as Array[Vector2i])
 	)
 	assert_eq(state.zones().size(), 1)
+
+
+func test_a_placement_whose_piece_has_no_zone_source_projects_null() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/37 — null, never an empty zone.
+	var placement := BoardPlacement.new(BoardPiece.new(), 0, [Vector2i.ZERO] as Array[Vector2i])
+	assert_null(placement.zone())
