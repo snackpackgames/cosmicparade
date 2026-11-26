@@ -82,6 +82,33 @@ func test_the_collision_prism_spans_the_top_face_to_the_board_base() -> void:
 	assert_almost_eq(heights[1], Elevation.height_for_depth(2), 0.0001)
 
 
+# Godot's front faces are clockwise: a visible triangle's right-hand normal points AWAY from
+# the side it is seen from, opposite to its shading normal. `CylinderMesh` with six radial
+# segments -- the same shape, authored by Godot -- winds all 36 of its faces that way. Wound the
+# other way every face of the prism is culled and a hex reads as a shell with its lid missing,
+# which is what it did. Heights and the collision prism are unaffected by winding, so no other
+# test here can see this. https://github.com/snackpackgames/cosmicparade/issues/150
+func test_every_face_is_wound_so_it_is_not_culled() -> void:
+	var space := _space(Vector2i(2, -1), 3)
+	var mesh: ArrayMesh = space.get_node("MeshInstance3D").mesh
+	var arrays: Array = mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	assert_null(arrays[Mesh.ARRAY_INDEX], "unindexed, so vertices are read three at a time")
+	assert_eq(vertices.size(), 54, "six triangles of top face and twelve of wall")
+	for triangle in range(0, vertices.size(), 3):
+		var right_hand := (
+			(vertices[triangle + 1] - vertices[triangle])
+			. cross(vertices[triangle + 2] - vertices[triangle])
+			. normalized()
+		)
+		assert_lt(
+			right_hand.dot(normals[triangle]),
+			0.0,
+			"triangle %d is wound inside out" % (triangle / 3)
+		)
+
+
 func test_the_top_face_is_level_so_the_riser_is_vertical() -> void:
 	# Discrete risers, never smoothed slopes: every top corner is at the hex's
 	# own height. https://github.com/snackpackgames/cosmicparade/issues/28

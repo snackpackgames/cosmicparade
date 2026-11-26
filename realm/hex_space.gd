@@ -99,19 +99,22 @@ func _build_mesh() -> ArrayMesh:
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var corners := HexCoordinates.corner_offsets()
 	var top := Vector3(0.0, _top_height, 0.0)
+	# Clockwise, which is what Godot culls against: every triangle below is ordered so its
+	# right-hand normal points away from the side the face is seen from, opposite to the
+	# shading normal. https://github.com/snackpackgames/cosmicparade/issues/150
 	for i in 6:
 		var next := (i + 1) % 6
 		_add_vertex(tool, top, Vector3.UP)
-		_add_vertex(tool, corners[next] + top, Vector3.UP)
 		_add_vertex(tool, corners[i] + top, Vector3.UP)
+		_add_vertex(tool, corners[next] + top, Vector3.UP)
 		var normal := ((corners[i] + corners[next]) * 0.5).normalized()
 		var base := Vector3(0.0, BASE_Y, 0.0)
 		_add_vertex(tool, corners[i] + top, normal)
+		_add_vertex(tool, corners[next] + base, normal)
 		_add_vertex(tool, corners[next] + top, normal)
-		_add_vertex(tool, corners[next] + base, normal)
 		_add_vertex(tool, corners[i] + top, normal)
-		_add_vertex(tool, corners[next] + base, normal)
 		_add_vertex(tool, corners[i] + base, normal)
+		_add_vertex(tool, corners[next] + base, normal)
 	return tool.commit()
 
 
