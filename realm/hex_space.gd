@@ -1,6 +1,12 @@
+@tool
 class_name HexSpace
 extends StaticBody3D
 ## A single hex space: a prism from its own top face down to the board base.
+##
+## `@tool` so `RealmBoard`'s editor preview can build these. It declares no lifecycle callbacks,
+## so the annotation changes no behaviour -- it only lets the editor run `configure` and
+## `set_depth` when the board draws itself there.
+## https://github.com/snackpackgames/cosmicparade/issues/146
 
 const BASE_Y := -2.0
 const UV_SCALE := 0.5

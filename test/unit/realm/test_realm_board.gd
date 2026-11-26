@@ -126,3 +126,34 @@ func test_the_realm_scene_is_not_the_main_scene() -> void:
 	assert_eq(
 		ProjectSettings.get_setting("application/run/main_scene"), "res://ui/title/title.tscn"
 	)
+
+
+func test_the_editor_preview_never_runs_outside_the_editor() -> void:
+	# The preview exists only so the scene is not empty in the editor viewport
+	# (https://github.com/snackpackgames/cosmicparade/issues/146). Drop the
+	# `Engine.is_editor_hint()` guard and touching either property mid-game would rebuild
+	# the live board from a radius nobody is playing. Asserted through `hex_space`
+	# rather than the child count, because `set_hexes` frees with `queue_free` and the
+	# nodes would still be there this frame.
+	var board := _board([] as Array[InfluenceZone])
+	board.preview_radius = RealmGeometry.CORE_MAX_RADIUS
+	assert_null(board.hex_space(Vector2i(4, 0)), "no hex arrives from a previewed radius")
+	board.preview_in_editor = false
+	assert_not_null(board.hex_space(Vector2i.ZERO), "and none is taken away")
+
+
+func test_the_preview_opens_on_the_radius_the_realm_starts_at() -> void:
+	var board: RealmBoard = add_child_autofree(RealmBoard.new())
+	assert_eq(board.preview_radius, RealmGeometry.CORE_START_RADIUS)
+	assert_true(board.preview_in_editor, "off by default would leave the viewport empty")
+
+
+func test_the_preview_draws_the_core_at_the_radius_it_was_given() -> void:
+	# The counts are `adr/0015`'s: radius 3 opens at 37 hexes and concentric growth
+	# caps at radius 5, which is 91 -- the README's original "10x10" on a hex lattice.
+	var board: RealmBoard = add_child_autofree(RealmBoard.new())
+	assert_eq(board._preview_hexes().size(), 37, "the opening board")
+	board.preview_radius = RealmGeometry.CORE_MAX_RADIUS
+	assert_eq(board._preview_hexes().size(), 91, "the concentric ceiling")
+	board.preview_in_editor = false
+	assert_eq(board._preview_hexes().size(), 0, "switched off, it draws nothing")
