@@ -199,6 +199,7 @@ number means nothing on its own until it is named in `project.godot`.
 - Scene files (`.tscn`) are paired with scripts (`.gd`) in the same directory or a `/scenes/` subdirectory
 - Data definitions use Godot Resources (`.tres`), logic lives in scripts. Authored resources extend the `GameData` base (`common/game_data.gd`, arriving with the first `.tres`); the Resource script stays with its system and instances live at `data/<system>/<type>/<instance>.tres`
 - Every script declares a `class_name`, with one documented exception: **an autoload script declares no `class_name`**, since it would collide with the singleton name
+- Test the type of the object whose behaviour varies; never reach through to ask a collaborator's type — a test on `piece` or `<something>.piece` that governs a placement is the smell. Reading authored data off a piece (`piece.criteria`, `piece.zone_source`, `piece.reading`) is not a type test. See `documentation/adr/0018-the-board-never-asks-what-is-standing-on-it.md`
 - Use full `snake_case` words for variable and parameter names — avoid cryptic abbreviations like `rr`/`rv`/`sa`/`ea`/`inst`/`def`/`rs`. Prefer `roll_range`, `rolled_value`, `stat_affix`, `effect_affix`, `instance`, `definition`, `rolled_stat`. Short loop counters (`i`, `j`) and established project-wide terms (e.g. `mod` for `StatModifier`) are fine.
 
 ## Claude Code Configuration

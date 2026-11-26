@@ -206,6 +206,7 @@ rm .git/hooks/pre-push
 - Test classes extend `GutTest`
 - Run tests locally before pushing: `bash scripts/test.sh` (see `CLAUDE.md` for setup)
 - A test script that fails to parse is caught by `test/hooks/pre_run_hook.gd` and reported as a failure of `test_all_test_scripts_load`, rather than being silently dropped by GUT
+- Every board piece type reaches the board through the carry in at least one test: build a `Carry`, lift the piece, aim, and call `place()`. A test that constructs a placement and hands it to `RealmState` has not exercised the path the player takes. Provenance: [#96](https://github.com/snackpackgames/cosmicparade/pull/96) and [#104](https://github.com/snackpackgames/cosmicparade/issues/104) ([decided in #130](https://github.com/snackpackgames/cosmicparade/issues/130))
 - `test/prototypes/` is not part of the suite — it holds throwaway Godot projects kept as the evidence behind a design decision. They are linted but never run by `scripts/test.sh`, and nothing in them is authoritative. See `test/prototypes/README.md`
 
 ## Repo setup
