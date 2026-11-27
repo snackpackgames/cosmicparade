@@ -609,7 +609,7 @@ Phase 3 also modifies. Consumes Phase 2's `BoardPlacement`.
 
 This task carries **Review Focus 4**.
 
-- [ ] **Step 1: Write the failing tests** in `test/unit/realm/test_carried_piece.gd`
+- [x] **Step 1: Write the failing tests** in `test/unit/realm/test_carried_piece.gd`
 
 ```gdscript
 # Review Focus 4: "unplaced" is derived from having no hexes, and from nothing else.
@@ -646,9 +646,9 @@ Keep `test_moving_a_fed_shrine_does_not_empty_its_vessel` and
 signature and **keep their assertions**, retargeting the second one at
 `state.vessel_placements()`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
-- [ ] **Step 3: Rewrite `realm/carried_piece.gd` to two fields**
+- [x] **Step 3: Rewrite `realm/carried_piece.gd` to two fields**
 
 `_init(placeable: BoardPlacement, grabbed: Vector2i)`. Delete `origin` and the `piece` field;
 expose the piece through the placeable where callers need it.
@@ -666,7 +666,7 @@ expose the piece through the placeable where callers need it.
 - `hexes_at`, `orientation_count`, `verdict_at`, `zone_at` and `describe_requirements` keep their
   behaviour, reading `piece` through the placeable.
 
-- [ ] **Step 4: Update the two lift sites and delete `_carried_shrine_zone()`**
+- [x] **Step 4: Update the two lift sites and delete `_carried_shrine_zone()`**
 
 `lift_from_inventory(piece)` builds an unplaced placeable — no hexes — and carries it.
 `lift_under_cursor()` carries the occupant it found, which **is** the placeable, so nothing is
@@ -679,7 +679,7 @@ reading ([#79](https://github.com/snackpackgames/cosmicparade/issues/79),
 `test_a_carried_piece_of_furniture_never_enters_the_altars_reading` are the guards on this step.
 Both must pass unchanged.
 
-- [ ] **Step 5: Run the full suite, lint, and commit**
+- [x] **Step 5: Run the full suite, lint, and commit**
 
 ---
 

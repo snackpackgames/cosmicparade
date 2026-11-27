@@ -85,7 +85,11 @@ func lift_from_inventory(piece: BoardPiece) -> void:
 	if carry.is_carrying():
 		return
 	_inventory_piece = piece
-	carry.lift(CarriedPiece.new(piece, piece.anchor, null), cursor.targeted_hex)
+	# A placeable with no hexes: it stands nowhere until a commit gives it some, which is the
+	# whole of "it came from stock" — the carry derives the rest from that.
+	# https://github.com/snackpackgames/cosmicparade/issues/127
+	var unplaced := BoardPlacement.new(piece, 0, [] as Array[Vector2i])
+	carry.lift(CarriedPiece.new(unplaced, piece.anchor), cursor.targeted_hex)
 	_announce_if_impossible(piece, piece.anchor)
 
 
@@ -99,7 +103,9 @@ func lift_from_stock() -> void:
 
 
 ## Lifts the piece standing under the cursor, with the cursor's hex as the grab hex so the piece
-## does not jump in the hand.
+## does not jump in the hand. The occupant it finds *is* the placeable, so nothing is copied and
+## whatever per-placement state it holds travels with it.
+## https://github.com/snackpackgames/cosmicparade/issues/129
 func lift_under_cursor() -> void:
 	if carry.is_carrying():
 		return
@@ -110,7 +116,7 @@ func lift_under_cursor() -> void:
 	var grab_offset: Vector2i = offsets[origin.hexes.find(cursor.targeted_hex)]
 	_inventory_piece = null
 	_touch_zone_of(origin)
-	carry.lift(CarriedPiece.new(origin.piece, grab_offset, origin), cursor.targeted_hex)
+	carry.lift(CarriedPiece.new(origin, grab_offset), cursor.targeted_hex)
 	_announce_if_impossible(origin.piece, grab_offset)
 
 
@@ -404,29 +410,24 @@ func _refresh_readout() -> void:
 	readout.refresh(_reading_for_readout(), balance, swell)
 
 
-# The committed reading, plus the shrine in hand when there is one.
+# The committed reading, plus the vessel in hand when there is one. The reading is shrine zones
+# only, so the candidate is filtered to vessels — a carried piece of furniture never enters it,
+# however close to the Altar it is aimed. The zone comes from the carried placeable itself, posed
+# where it is aimed now, because what is in the vessel is per-placement state rather than
+# anything the piece knows; an empty vessel from stock projects nothing and so adds nothing.
+# https://github.com/snackpackgames/cosmicparade/issues/75
+# https://github.com/snackpackgames/cosmicparade/issues/79
+# https://github.com/snackpackgames/cosmicparade/issues/129
 func _reading_for_readout() -> AltarReading:
-	var carried_zone := _carried_shrine_zone()
+	var carried := carry.carried as CarriedPiece
+	if carried == null or not carried.placeable.can_hold_offering():
+		return state.altar_reading()
+	var aimed := carried.placeable.relocated(
+		carry.orientation, carried.hexes_at(carry.target, carry.orientation)
+	)
+	var carried_zone := aimed.zone()
 	if carried_zone == null:
 		return state.altar_reading()
 	var zones := state.shrine_zones()
 	zones.append(carried_zone)
 	return AltarReading.of(state.altar_hexes(), zones)
-
-
-# The reading is shrine zones only, so a candidate joins it only when a shrine is in hand — a
-# carried piece of furniture never enters it, however close to the Altar it is aimed. A shrine
-# projects through its placement and not its piece, because what is in the vessel is
-# per-placement state, so `Carried.zone_at` is null for every shrine and the zone is taken from
-# the placement it was lifted from, moved to where it is aimed now.
-# https://github.com/snackpackgames/cosmicparade/issues/75
-# https://github.com/snackpackgames/cosmicparade/issues/79
-func _carried_shrine_zone() -> InfluenceZone:
-	if not carry.is_carrying():
-		return null
-	var carried := carry.carried as CarriedPiece
-	if carried == null or carried.origin == null or not carried.origin.can_hold_offering():
-		return null
-	var origin := carried.origin
-	var hexes := carried.hexes_at(carry.target, carry.orientation)
-	return origin.relocated(carry.orientation, hexes).zone()
