@@ -48,7 +48,7 @@ func _realm() -> Realm:
 # The scene stands its Altar on the origin; tests that need the origin bare take it off.
 func _bare_realm() -> Realm:
 	var realm := await _realm()
-	realm.state.remove(realm.state.altar_placement)
+	realm.state.remove(realm.state.occupant_at(Vector2i.ZERO))
 	return realm
 
 
@@ -344,7 +344,7 @@ func test_the_altar_can_be_lifted_and_cancelled_back() -> void:
 	realm.carry.cancel()
 
 	assert_not_null(realm.state.occupant_at(Vector2i.ZERO))
-	assert_eq(realm.state.altar_placement.hexes.size(), 3)
+	assert_eq(realm.state.altar_hexes().size(), 3)
 
 
 func test_there_is_no_way_to_stow_the_altar() -> void:
@@ -456,8 +456,8 @@ func test_a_wing_the_altar_is_standing_across_is_not_lifted() -> void:
 	# furniture back to the player, and the Altar has no destination, so this is a second
 	# named cause on the refusal a disconnecting lift already earns.
 	var realm := await _wing_on_the_board()
-	var altar: BoardPiece = realm.state.altar_placement.piece
-	realm.state.remove(realm.state.altar_placement)
+	var altar: BoardPiece = Realm.ALTAR
+	realm.state.remove(realm.state.occupant_at(Vector2i.ZERO))
 	realm.state.place(BoardPlacement.new(
 		altar, 0,
 		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
@@ -474,8 +474,8 @@ func test_a_wing_the_altar_is_standing_across_is_not_lifted() -> void:
 func test_carrying_the_altar_clear_frees_the_wing_again() -> void:
 	# Nothing is permanently pinned: the recourse is always available.
 	var realm := await _wing_on_the_board()
-	var altar: BoardPiece = realm.state.altar_placement.piece
-	realm.state.remove(realm.state.altar_placement)
+	var altar: BoardPiece = Realm.ALTAR
+	realm.state.remove(realm.state.occupant_at(Vector2i.ZERO))
 	realm.state.place(BoardPlacement.new(
 		altar, 0,
 		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(5, 0), Vector2i.ZERO)
@@ -511,8 +511,8 @@ func test_a_wing_carrying_the_whole_altar_is_still_lifted() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/53 relocates a wing with its
 	# contents, so an Altar wholly aboard travels rather than pinning it.
 	var realm := await _wing_on_the_board()
-	var altar: BoardPiece = realm.state.altar_placement.piece
-	realm.state.remove(realm.state.altar_placement)
+	var altar: BoardPiece = Realm.ALTAR
+	realm.state.remove(realm.state.occupant_at(Vector2i.ZERO))
 	realm.state.place(BoardPlacement.new(
 		altar, 0,
 		Footprint.occupied(Footprint.Shape.TRIANGLE, 0, Vector2i(7, -1), Vector2i.ZERO)

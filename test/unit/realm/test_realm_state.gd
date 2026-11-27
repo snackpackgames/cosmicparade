@@ -165,6 +165,7 @@ func test_lifting_a_shrine_off_the_board_puts_it_back_in_stock() -> void:
 func _altar() -> Altar:
 	var altar := Altar.new()
 	altar.piece_name = "test altar"
+	altar.reading = InfluenceReading.new()
 	altar.shape = Footprint.Shape.TRIANGLE
 	altar.criteria = [LevelFootprintCriterion.new()] as Array[PlacementCriterion]
 	return altar
@@ -175,7 +176,7 @@ func test_a_new_realm_stands_its_altar_on_the_origin() -> void:
 	state.place_altar(_altar())
 	for hex: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, -1)]:
 		assert_not_null(state.occupant_at(hex))
-	assert_eq(state.altar_placement.hexes.size(), 3)
+	assert_eq(state.altar_hexes().size(), 3)
 
 
 func test_the_altar_contributes_no_zone() -> void:
@@ -215,14 +216,14 @@ func test_a_wing_carrying_the_whole_altar_can_still_be_lifted() -> void:
 		Footprint.Shape.TRIANGLE, 0, Vector2i(7, -1), Vector2i.ZERO
 	)
 	assert_eq(_on_wing(state, 0, aboard), aboard.size(), "every hex of it is on the wing")
-	state.altar_placement = BoardPlacement.new(_altar(), 0, aboard)
+	state.place(BoardPlacement.new(_altar(), 0, aboard))
 	assert_false(state.altar_straddles_wing(0))
 
 
 func test_an_altar_nowhere_near_the_wing_leaves_it_liftable() -> void:
 	var state := _state_with_a_wing()
 	state.place_altar(_altar())
-	assert_eq(_on_wing(state, 0, state.altar_placement.hexes), 0)
+	assert_eq(_on_wing(state, 0, state.altar_hexes()), 0)
 	assert_false(state.altar_straddles_wing(0))
 
 
@@ -239,7 +240,7 @@ func test_an_altar_across_the_seam_pins_the_wing() -> void:
 	assert_gt(aboard, 0, "at least one hex on the wing")
 	assert_lt(aboard, across.size(), "and at least one off it")
 
-	state.altar_placement = BoardPlacement.new(_altar(), 0, across)
+	state.place(BoardPlacement.new(_altar(), 0, across))
 
 	assert_true(state.altar_straddles_wing(0))
 
@@ -264,18 +265,28 @@ func test_a_straddling_shrine_goes_back_to_stock_by_being_removed() -> void:
 	assert_null(state.occupant_at(Vector2i(-2, 0)))
 
 
-func test_the_altars_placement_follows_it_when_it_is_relocated() -> void:
-	# The field is an index over `placements`, kept by the mutations, because the Altar is
-	# relocated through the one carry path: a stale footprint would go on pinning a wing the
-	# Altar had already been carried off.
+func test_the_altars_hexes_are_its_footprint_once_it_stands() -> void:
 	var state := _state()
 	state.place_altar(_altar())
-	state.remove(state.altar_placement)
-	assert_null(state.altar_placement, "lifted, it stands nowhere")
+	assert_eq(state.altar_hexes().size(), 3, "a triangle-three")
+	assert_true(state.altar_hexes().has(Vector2i.ZERO))
 
+
+func test_the_altars_hexes_follow_it_when_it_is_relocated() -> void:
+	# https://github.com/snackpackgames/cosmicparade/pull/102 -- the stored field went stale
+	# here; a derived accessor holds no answer to go stale.
+	var state := _state()
+	state.place_altar(_altar())
+	state.remove(state.placements[0])
 	var moved := Footprint.occupied(
 		Footprint.Shape.TRIANGLE, 0, Vector2i(-2, 0), Vector2i.ZERO
 	)
 	state.place(BoardPlacement.new(_altar(), 0, moved))
+	assert_eq(state.altar_hexes(), moved)
 
-	assert_eq(state.altar_placement.hexes, moved)
+
+func test_a_realm_with_no_altar_reports_no_hexes_and_still_answers() -> void:
+	var state := _state()
+	assert_eq(state.altar_hexes(), [] as Array[Vector2i])
+	assert_false(state.altar_straddles_wing(0), "iterating nothing is aboard nowhere")
+	assert_true(state.altar_reading().is_empty(), "nothing reaches an Altar that is absent")
