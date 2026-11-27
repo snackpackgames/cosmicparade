@@ -103,13 +103,23 @@ func test_a_piece_that_projects_nothing_is_judged_without_a_zone() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/77 -- the Altar projects
 	# nothing, so there is no candidate zone to judge it against. Not a refusal.
 	var state := RealmState.new(RealmGeometry.new())
-	var verdict := PlacementRules.verdict(BoardPiece.new(), 0, Vector2i.ZERO, Vector2i.ZERO, state)
+	var verdict := PlacementRules.verdict(
+		_unplaced(BoardPiece.new()), 0, Vector2i.ZERO, Vector2i.ZERO, state
+	)
 	assert_true(verdict.allowed)
 
 
 func test_carrying_a_piece_that_projects_nothing_aims_a_null_zone() -> void:
 	var carried := CarriedPiece.new(_unplaced(BoardPiece.new()), Vector2i.ZERO)
 	assert_null(carried.zone_at(Vector2i.ZERO, 0))
+
+
+func test_the_aimed_zone_grows_from_the_hexes_it_would_occupy() -> void:
+	# https://github.com/snackpackgames/cosmicparade/issues/77 -- the zone follows the
+	# candidate footprint, not the hexes the placeable stands on: a placeable lifted from
+	# inventory stands on none, and its three-hex bench still reaches thirteen.
+	var carried := CarriedPiece.new(_unplaced(_bench()), Vector2i(1, 0))
+	assert_eq(carried.zone_at(Vector2i.ZERO, 0).hex_count(), 13)
 
 
 func test_moving_a_fed_shrine_does_not_empty_its_vessel() -> void:
