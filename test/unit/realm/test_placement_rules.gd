@@ -23,6 +23,28 @@ func _unplaced(piece: BoardPiece) -> BoardPlacement:
 	return BoardPlacement.new(piece, 0, [] as Array[Vector2i])
 
 
+# A shrine carrying a vessel, in hand and aimed at nothing yet.
+func _unplaced_shrine() -> BoardPlacement:
+	var shrine := Shrine.new()
+	shrine.zone_source = OfferingVessel.new()
+	return _unplaced(shrine)
+
+
+func _fruit(domain: Domain.Kind) -> Fruit:
+	var fruit := Fruit.new()
+	fruit.domain = domain
+	return fruit
+
+
+# Built inline rather than authored: no shrine `.tres` carries criteria, and nothing here asks
+# one to. test_debug_readout.gd is the precedent for building a criterion in a test.
+func _needs_forest(minimum: int) -> DomainInfluenceCriterion:
+	var influence := DomainInfluenceCriterion.new()
+	influence.domain = Domain.Kind.FOREST
+	influence.minimum = minimum
+	return influence
+
+
 # Two Forest stools whose radius-1 discs together cover the line (-1,0) (0,0) (1,0),
 # which is what a straight-three authoring Forest >= 2 needs. One stool cannot do it:
 # the only straight-three inside a radius-1 disc runs through the disc's own centre,
@@ -125,3 +147,27 @@ func test_several_failing_criteria_are_all_named_at_once() -> void:
 	piece.criteria = [influence, height] as Array[PlacementCriterion]
 	var verdict := PlacementRules.verdict(_unplaced(piece), 0, Vector2i.ZERO, Vector2i.ZERO, _state())
 	assert_eq(verdict.failing_criteria.size(), 2)
+
+
+# Review Focus 2, the fed half.
+# https://github.com/snackpackgames/cosmicparade/issues/41 -- a candidate's own influence is part
+# of the board its criteria are judged against. #134 extends that to a derived projection: before
+# this, `verdict` asked the piece, and an authored shrine's vessel is never fed.
+func test_a_fed_vessels_own_zone_counts_toward_its_own_criteria() -> void:
+	var state := _state()
+	var placeable := _unplaced_shrine()
+	placeable.offer(_fruit(Domain.Kind.FOREST))
+	placeable.piece.criteria = [_needs_forest(1)] as Array[PlacementCriterion]
+	var verdict := PlacementRules.verdict(placeable, 0, Vector2i.ZERO, Vector2i.ZERO, state)
+	assert_true(verdict.allowed, "its own Forest satisfies the requirement")
+
+
+# Review Focus 2, the empty half.
+# https://github.com/snackpackgames/cosmicparade/issues/75 -- an empty vessel must not be judged
+# against a zone it does not project, so it contributes null rather than an empty zone.
+func test_an_empty_vessel_contributes_nothing_to_its_own_criteria() -> void:
+	var state := _state()
+	var placeable := _unplaced_shrine()
+	placeable.piece.criteria = [_needs_forest(1)] as Array[PlacementCriterion]
+	var verdict := PlacementRules.verdict(placeable, 0, Vector2i.ZERO, Vector2i.ZERO, state)
+	assert_false(verdict.allowed, "nothing in the vessel, nothing projected")

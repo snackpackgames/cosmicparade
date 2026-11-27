@@ -735,7 +735,7 @@ Update `Realm._announce_if_impossible`, `survey`'s only caller, to match.
 
 This task carries **Review Focus 2**.
 
-- [ ] **Step 1: Write the failing tests** in `test/unit/realm/test_placement_rules.gd`
+- [x] **Step 1: Write the failing tests** in `test/unit/realm/test_placement_rules.gd`
 
 ```gdscript
 # https://github.com/snackpackgames/cosmicparade/issues/41 -- a candidate's own influence is part
@@ -763,18 +763,18 @@ func test_an_empty_vessel_contributes_nothing_to_its_own_criteria() -> void:
 for building one in a test. `_unplaced_shrine()` builds a `Shrine` carrying an `OfferingVessel`
 and a placeable with no hexes.
 
-- [ ] **Step 2: Run the tests; the empty case should already pass and the fed case should fail**
+- [x] **Step 2: Run the tests; the empty case should already pass and the fed case should fail**
 
 Record which fails. If the **fed** case already passes before Task 5.1's change is in, the
 signature migration did not actually reach `_context_for` — stop and find out why.
 
-- [ ] **Step 3: Confirm no production change is needed**
+- [x] **Step 3: Confirm no production change is needed**
 
 Both behaviours fall out of Task 5.1. If either test needs a production edit to pass, that edit is
 outside what [#134](https://github.com/snackpackgames/cosmicparade/issues/134) decided — stop and
 report rather than widening the change.
 
-- [ ] **Step 4: Run the full suite, lint, and commit**
+- [x] **Step 4: Run the full suite, lint, and commit**
 
 ---
 
