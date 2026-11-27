@@ -409,12 +409,9 @@ func _reading_for_readout() -> AltarReading:
 	var carried_zone := _carried_shrine_zone()
 	if carried_zone == null:
 		return state.altar_reading()
-	var hexes: Array[Vector2i] = []
-	if state.altar_placement != null:
-		hexes = state.altar_placement.hexes
 	var zones := state.shrine_zones()
 	zones.append(carried_zone)
-	return AltarReading.of(hexes, zones)
+	return AltarReading.of(state.altar_hexes(), zones)
 
 
 # The reading is shrine zones only, so a candidate joins it only when a shrine is in hand — a

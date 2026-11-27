@@ -22,6 +22,7 @@ func _shrine() -> Shrine:
 func _altar() -> Altar:
 	var altar := Altar.new()
 	altar.piece_name = "test altar"
+	altar.reading = InfluenceReading.new()
 	altar.shape = Footprint.Shape.TRIANGLE
 	altar.criteria = [LevelFootprintCriterion.new()] as Array[PlacementCriterion]
 	return altar
