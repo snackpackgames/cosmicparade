@@ -90,7 +90,7 @@ func lift_from_inventory(piece: BoardPiece) -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/127
 	var unplaced := BoardPlacement.new(piece, 0, [] as Array[Vector2i])
 	carry.lift(CarriedPiece.new(unplaced, piece.anchor), cursor.targeted_hex)
-	_announce_if_impossible(piece, piece.anchor)
+	_announce_if_impossible(unplaced, piece.anchor)
 
 
 ## Lifts a shrine from stock through the same inventory path as any piece. Inert when every
@@ -117,7 +117,7 @@ func lift_under_cursor() -> void:
 	_inventory_piece = null
 	_touch_zone_of(origin)
 	carry.lift(CarriedPiece.new(origin, grab_offset), cursor.targeted_hex)
-	_announce_if_impossible(origin.piece, grab_offset)
+	_announce_if_impossible(origin, grab_offset)
 
 
 ## Hands the player a wing to site. A wing goes through the same carry furniture does, so there
@@ -276,10 +276,10 @@ func _is_target_press(event: InputEvent) -> bool:
 
 
 # The sweep is a function of the committed board, which cannot change during a carry, so it runs
-# once on lift and not per frame. The piece is already detached, so a lifted piece's own hexes
-# count as free.
-func _announce_if_impossible(piece: BoardPiece, grab_offset: Vector2i) -> void:
-	var survey := PlacementRules.survey(piece, grab_offset, state)
+# once on lift and not per frame. The placeable is already detached, so a lifted piece's own
+# hexes count as free.
+func _announce_if_impossible(placeable: BoardPlacement, grab_offset: Vector2i) -> void:
+	var survey := PlacementRules.survey(placeable, grab_offset, state)
 	if not survey.unsatisfiable.is_empty():
 		nothing_satisfies.emit(survey.unsatisfiable)
 

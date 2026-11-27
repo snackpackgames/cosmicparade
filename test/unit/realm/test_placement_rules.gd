@@ -18,6 +18,11 @@ func _stool_at(hex: Vector2i) -> BoardPlacement:
 	return BoardPlacement.new(_stool(), 0, [hex] as Array[Vector2i])
 
 
+# A placeable awaiting a target: no hexes, because it stands nowhere yet.
+func _unplaced(piece: BoardPiece) -> BoardPlacement:
+	return BoardPlacement.new(piece, 0, [] as Array[Vector2i])
+
+
 # Two Forest stools whose radius-1 discs together cover the line (-1,0) (0,0) (1,0),
 # which is what a straight-three authoring Forest >= 2 needs. One stool cannot do it:
 # the only straight-three inside a radius-1 disc runs through the disc's own centre,
@@ -28,7 +33,9 @@ func _flank_the_centre_line_with_forest(state: RealmState) -> void:
 
 
 func test_an_unencumbered_piece_is_allowed_on_an_empty_board() -> void:
-	var verdict := PlacementRules.verdict(_stool(), 0, Vector2i.ZERO, Vector2i.ZERO, _state())
+	var verdict := PlacementRules.verdict(
+		_unplaced(_stool()), 0, Vector2i.ZERO, Vector2i.ZERO, _state()
+	)
 	assert_true(verdict.allowed)
 	assert_eq(verdict.failing_hexes, [] as Array[Vector2i])
 	assert_eq(verdict.failing_criteria, [] as Array[PlacementCriterion])
@@ -37,7 +44,9 @@ func test_an_unencumbered_piece_is_allowed_on_an_empty_board() -> void:
 # Review Focus 1: occupied hexes are board hexes by definition.
 func test_a_footprint_hanging_off_the_board_is_refused() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/59
-	var verdict := PlacementRules.verdict(_bench(), 0, Vector2i(3, 0), Vector2i(1, 0), _state())
+	var verdict := PlacementRules.verdict(
+		_unplaced(_bench()), 0, Vector2i(3, 0), Vector2i(1, 0), _state()
+	)
 	assert_false(verdict.allowed)
 	assert_true(verdict.failing_hexes.has(Vector2i(4, 0)), "the hex in the void is marked")
 	assert_eq(
@@ -50,7 +59,7 @@ func test_a_footprint_overlapping_another_piece_is_refused() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/51 — footprints never overlap.
 	var state := _state()
 	state.place(_stool_at(Vector2i.ZERO))
-	var verdict := PlacementRules.verdict(_stool(), 0, Vector2i.ZERO, Vector2i.ZERO, state)
+	var verdict := PlacementRules.verdict(_unplaced(_stool()), 0, Vector2i.ZERO, Vector2i.ZERO, state)
 	assert_false(verdict.allowed)
 	assert_eq(verdict.failing_hexes, [Vector2i.ZERO] as Array[Vector2i])
 
@@ -59,13 +68,15 @@ func test_influence_may_overlap_even_though_footprints_may_not() -> void:
 	var state := _state()
 	state.place(_stool_at(Vector2i.ZERO))
 	assert_true(
-		PlacementRules.verdict(_stool(), 0, Vector2i(1, 0), Vector2i.ZERO, state).allowed
+		PlacementRules.verdict(_unplaced(_stool()), 0, Vector2i(1, 0), Vector2i.ZERO, state).allowed
 	)
 
 
 func test_a_failing_criterion_is_named_and_its_hexes_are_marked() -> void:
 	# fern_bench authors Forest >= 2, which an empty board cannot satisfy.
-	var verdict := PlacementRules.verdict(_bench(), 0, Vector2i.ZERO, Vector2i(1, 0), _state())
+	var verdict := PlacementRules.verdict(
+		_unplaced(_bench()), 0, Vector2i.ZERO, Vector2i(1, 0), _state()
+	)
 	assert_false(verdict.allowed)
 	assert_eq(verdict.failing_hexes.size(), 3, "every hex of the footprint is short")
 	assert_eq(verdict.failing_criteria.size(), 1)
@@ -79,7 +90,7 @@ func test_a_criterion_reads_the_board_as_it_will_be_with_the_piece_on_it() -> vo
 	var state := _state()
 	_flank_the_centre_line_with_forest(state)
 	assert_true(
-		PlacementRules.verdict(_bench(), 0, Vector2i.ZERO, Vector2i(1, 0), state).allowed
+		PlacementRules.verdict(_unplaced(_bench()), 0, Vector2i.ZERO, Vector2i(1, 0), state).allowed
 	)
 
 
@@ -88,8 +99,12 @@ func test_rotation_is_a_second_axis_of_escape_from_a_refusal() -> void:
 	# the occupied set, so one orientation can be refused and another allowed.
 	var state := _state()
 	state.place(_stool_at(Vector2i(2, 0)))
-	var blocked := PlacementRules.verdict(_bench(), 0, Vector2i(1, 0), Vector2i(1, 0), state)
-	var turned := PlacementRules.verdict(_bench(), 1, Vector2i(1, 0), Vector2i(1, 0), state)
+	var blocked := PlacementRules.verdict(
+		_unplaced(_bench()), 0, Vector2i(1, 0), Vector2i(1, 0), state
+	)
+	var turned := PlacementRules.verdict(
+		_unplaced(_bench()), 1, Vector2i(1, 0), Vector2i(1, 0), state
+	)
 	assert_false(blocked.allowed, "straight along the row it collides")
 	assert_false(turned.failing_hexes.has(Vector2i(2, 0)), "turned, it clears the stool")
 
@@ -108,11 +123,5 @@ func test_several_failing_criteria_are_all_named_at_once() -> void:
 	var height := HeightCriterion.new()
 	height.min_depth = 2
 	piece.criteria = [influence, height] as Array[PlacementCriterion]
-	var verdict := PlacementRules.verdict(piece, 0, Vector2i.ZERO, Vector2i.ZERO, _state())
+	var verdict := PlacementRules.verdict(_unplaced(piece), 0, Vector2i.ZERO, Vector2i.ZERO, _state())
 	assert_eq(verdict.failing_criteria.size(), 2)
-
-
-func test_zone_for_grows_the_candidate_zone_from_its_occupied_hexes() -> void:
-	assert_eq(
-		PlacementRules.zone_for(_bench(), 0, Vector2i.ZERO, Vector2i(1, 0)).hex_count(), 13
-	)

@@ -706,15 +706,15 @@ is pinned by Task 5.2 rather than left to be discovered.
 
 ### Task 5.1: `verdict`, `survey` and `_context_for` take the placeable
 
-- [ ] **Step 1: Update `test/unit/realm/test_placement_rules.gd` and `test_placement_survey.gd`**
+- [x] **Step 1: Update `test/unit/realm/test_placement_rules.gd` and `test_placement_survey.gd`**
 
 Change every call to pass an unplaced placeable instead of a piece. **Assertions do not change** —
 this step is a signature migration and the existing expectations are the proof it preserved
 behaviour.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
-- [ ] **Step 3: Change the three signatures**
+- [x] **Step 3: Change the three signatures**
 
 `verdict` and `survey` take the placeable; `_context_for` takes it too and asks **it** for the
 candidate zone rather than reaching for `piece.zone_source`. Shape and criteria still resolve
@@ -729,7 +729,7 @@ the first becomes true here and **the second is now false and must go**
 
 Update `Realm._announce_if_impossible`, `survey`'s only caller, to match.
 
-- [ ] **Step 4: Run the full suite to verify nothing moved, then lint and commit**
+- [x] **Step 4: Run the full suite to verify nothing moved, then lint and commit**
 
 ### Task 5.2: Pin both halves of the vessel's own contribution
 

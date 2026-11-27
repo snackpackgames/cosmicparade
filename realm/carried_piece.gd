@@ -42,14 +42,16 @@ func own_orientation() -> int:
 
 
 func verdict_at(target: Vector2i, orientation: int, state: RealmState) -> PlacementVerdict:
-	return PlacementRules.verdict(placeable.piece, orientation, target, grab_offset, state)
+	return PlacementRules.verdict(placeable, orientation, target, grab_offset, state)
 
 
-## Null for a piece that projects nothing, which the carry already tolerates — a wing answers
-## the same way, and for the same reason.
+## The placeable's own zone, asked of the pose it would stand in rather than the one it stands
+## in now — a placeable lifted from inventory stands nowhere. Null for a piece that projects
+## nothing, which the carry already tolerates: a wing answers the same way, for the same reason.
 ## https://github.com/snackpackgames/cosmicparade/issues/77
+## https://github.com/snackpackgames/cosmicparade/issues/127
 func zone_at(target: Vector2i, orientation: int) -> InfluenceZone:
-	return PlacementRules.zone_for(placeable.piece, orientation, target, grab_offset)
+	return placeable.relocated(orientation, hexes_at(target, orientation)).zone()
 
 
 ## Taken off the board only when it is standing there; a placeable built for a lift from
