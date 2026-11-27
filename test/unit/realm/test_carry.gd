@@ -10,6 +10,14 @@ func _bench() -> Furniture:
 	return load("res://data/realm/furniture/fern_bench.tres")
 
 
+func _shrine() -> Shrine:
+	return load("res://data/realm/shrine/plain_shrine.tres")
+
+
+func _altar() -> Altar:
+	return load("res://data/realm/altar/altar.tres")
+
+
 # A placeable built for an inventory lift: no hexes, because it stands nowhere yet.
 func _unplaced(piece: BoardPiece) -> BoardPlacement:
 	return BoardPlacement.new(piece, 0, [] as Array[Vector2i])
@@ -147,3 +155,40 @@ func test_a_piece_lifted_from_the_board_keeps_its_own_orientation() -> void:
 	var carry := _carry(state)
 	carry.lift(CarriedPiece.new(origin, Vector2i.ZERO), Vector2i.ZERO)
 	assert_eq(carry.orientation, 5)
+
+
+# One carry-path test per piece type, so the player's own route to the board is pinned for all
+# three rather than just furniture: everything above this line carries furniture.
+# https://github.com/snackpackgames/cosmicparade/issues/130
+func test_a_shrine_carried_from_stock_lands_as_something_the_board_sees() -> void:
+	# https://github.com/snackpackgames/cosmicparade/pull/96 -- the defect this pins: a shrine
+	# placed through the carry was invisible to the board, and every test passed. Asserted
+	# through a board-level query rather than against the placement just built, and through
+	# `place()` rather than `commit()`, so the verdict gate is part of what is pinned.
+	# https://github.com/snackpackgames/cosmicparade/issues/74
+	var state := RealmState.new(RealmGeometry.new())
+	var carry := _carry(state)
+	carry.lift(CarriedPiece.new(_unplaced(_shrine()), Vector2i.ZERO), Vector2i(1, 0))
+	assert_true(carry.place(), "the bare origin ring allows it, so the rest asserts something")
+	assert_eq(state.vessel_placements().size(), 1, "the board sees a vessel standing")
+	assert_eq(state.shrines_in_stock(), RealmState.STARTING_SHRINE_CAPACITY - 1)
+
+
+func test_the_altar_relocated_through_the_carry_is_still_the_altar_the_board_reads() -> void:
+	# The Altar's only carry is relocation: there is no Altar stock entry.
+	# https://github.com/snackpackgames/cosmicparade/issues/130
+	# Its authored `LevelFootprintCriterion` passes anywhere sited on a board carrying no zones,
+	# and the Altar projects none of its own, so the triangle clears the core at (-2, 0).
+	var piece := _altar()
+	var state := RealmState.new(RealmGeometry.new())
+	state.place_altar(piece)
+	var carry := _carry(state)
+	carry.lift(CarriedPiece.new(state.occupant_at(Vector2i.ZERO), piece.anchor), Vector2i.ZERO)
+	carry.aim(Vector2i(-2, 0))
+	assert_true(carry.place(), "the level footprint allows it, so the rest asserts something")
+	var moved := Footprint.occupied(piece.shape, 0, Vector2i(-2, 0), piece.anchor)
+	assert_eq(state.altar_hexes(), moved, "derived, so it cannot be stale")
+	assert_false(state.altar_hexes().is_empty())
+	# https://github.com/snackpackgames/cosmicparade/pull/102 -- a stored footprint went stale
+	# here once, and still answered with the hexes the Altar had left.
+	assert_false(state.altar_hexes().has(Vector2i.ZERO), "and not from where it stood")

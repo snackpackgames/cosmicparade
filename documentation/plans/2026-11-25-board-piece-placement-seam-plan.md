@@ -852,7 +852,7 @@ Furniture already has several in `test_carry.gd`. The shrine's exists but sits o
 `test_carried_piece.gd` calls `commit()` with no `Carry` and so no verdict gate. The Altar has none
 ([decided](https://github.com/snackpackgames/cosmicparade/issues/130)).
 
-- [ ] **Step 1: Write the failing tests** in `test/unit/realm/test_carry.gd`
+- [x] **Step 1: Write the failing tests** in `test/unit/realm/test_carry.gd`
 
 ```gdscript
 func test_a_shrine_carried_from_stock_lands_as_something_the_board_sees() -> void:
@@ -885,18 +885,32 @@ func test_the_altar_relocated_through_the_carry_is_still_the_altar_the_board_rea
 Pick aim targets that the Altar's authored `LevelFootprintCriterion` actually allows on a bare
 board; if a target is refused, `place()` returns `false` and the test is asserting nothing.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
-- [ ] **Step 3: Make them pass**
+As implemented, both tests passed the moment they were written — Phases 1 through 5 had already
+delivered the behaviour, so there was nothing left to go red. Each was instead shown to pin
+something by temporarily breaking production in the working tree and watching the right test fail:
+dropping `BoardPlacement`'s zone-source wiring (the shrine test, which is #96's shape exactly),
+`BoardPiece.reads_influence()` returning `false`, and `CarriedPiece.commit` keeping the old hexes
+(the Altar test's derived and not-stale assertions). All three breaks were reverted and none was
+committed.
+
+The sample above also had to be adapted in one place: `assert_eq(state.altar_hexes(), altar.hexes)`
+cannot hold, because `commit` **replaces** the pose via `relocated()` rather than mutating the
+placement it was handed ([#131](https://github.com/snackpackgames/cosmicparade/issues/131)), so the
+pre-commit `altar` reference still carries the hexes it was lifted from. The test asserts against
+the footprint the Altar now occupies instead.
+
+- [x] **Step 3: Make them pass**
 
 No production change is expected — Phases 1 through 5 deliver the behaviour and these tests pin it.
 If a production edit is needed, something in an earlier phase is wrong; stop and report rather than
 patching here.
 
-- [ ] **Step 4: Lift the shrine's existing test a layer**
+- [x] **Step 4: Lift the shrine's existing test a layer**
 
 Rewrite `test_carried_piece.gd`'s `test_a_shrine_from_stock_lands_as_a_shrine_placement` to go
 through `Carry.place()`, or delete it as superseded by Step 1's first test — **it must not remain
 as the only shrine carry-path test**, since it skips the verdict gate.
 
-- [ ] **Step 5: Run the full suite, lint, and commit**
+- [x] **Step 5: Run the full suite, lint, and commit**

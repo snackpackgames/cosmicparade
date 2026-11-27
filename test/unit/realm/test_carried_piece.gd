@@ -144,13 +144,10 @@ func test_moving_a_fed_shrine_does_not_empty_its_vessel() -> void:
 	assert_eq(state.shrine_zones()[0].domain, Domain.Kind.WETLAND)
 	assert_true(state.shrine_zones()[0].covers(Vector2i(1, 0)), "from where it now stands")
 
-
-func test_a_shrine_from_stock_lands_as_a_shrine_placement() -> void:
-	# The carry asks the piece which placement it stands in, the same way it asks what it
-	# projects — or a placed shrine would be invisible to the board as a shrine.
-	# https://github.com/snackpackgames/cosmicparade/issues/74
-	var state := RealmState.new(RealmGeometry.new())
-	var shrine := Shrine.new()
-	shrine.zone_source = OfferingVessel.new()
-	CarriedPiece.new(_unplaced(shrine), Vector2i.ZERO).commit(Vector2i.ZERO, 0, state)
-	assert_eq(state.vessel_placements().size(), 1)
+# `test_a_shrine_from_stock_lands_as_a_shrine_placement` stood here. It called `commit()` with no
+# `Carry` and so skipped the verdict gate, which left the shrine's only carry-path coverage a
+# layer below the player's own route. Superseded by `test_carry.gd`'s
+# `test_a_shrine_carried_from_stock_lands_as_something_the_board_sees`, which pins the same
+# concern through `Carry.place()`.
+# https://github.com/snackpackgames/cosmicparade/issues/74
+# https://github.com/snackpackgames/cosmicparade/issues/130
