@@ -28,12 +28,24 @@ Read the type, then follow that type's procedure in `afk-pipeline.md`.
 **`afk-implementation` and `human-implementation`** — identical but for the label applied at the end (`ready-for-agent` and `ready-for-human` respectively):
 
 1. Slice: one plan per feature, one issue per plan phase, each sized to a single routine session.
-2. Write the plan(s) with the `superpowers:writing-plans` skill into `documentation/plans/YYYY-MM-DD-<slug>-plan.md`. Not `docs/superpowers/plans/` — this repo uses `documentation/plans/`.
+2. Write the plan(s) with the `superpowers:writing-plans` skill into `documentation/plans/YYYY-MM-DD-<slug>-plan.md`. Not `docs/superpowers/plans/` — this repo uses `documentation/plans/`. Then run the extra self-review check below, which that skill's own five do not cover.
 3. Commit on a `docs/<map-number>-<slug>` branch — the map is the tracked issue for this PR, since the implementation issues do not exist until step 4 — then open a PR with full metadata and **stop and ask the maintainer to merge it.** Do not merge your own PR unawaited. Resume at step 4 once merge is confirmed.
 4. File the issues on the template in `afk-pipeline.md`, wire `blocked_by` edges in a second pass once every issue has a number, then apply the label last.
 5. Index the handoff in the map's *Decisions so far* and **leave the map open.**
 
 **`decision-record` and `system-spec`**: write the ADR or system doc, merge it the same way, index it on the map. **Emit no issue and apply no label** — there is nothing for an agent to implement. Stop after indexing.
+
+## Sixth self-review check: can each test step pass against its own implementation step?
+
+`superpowers:writing-plans` ends with five self-review checks. Its nearest, *Type consistency*, compares names and signatures **across** tasks; none of the five reads a task's test step against the implementation step meant to satisfy it. Run this one too, per task, before step 3.
+
+For each task, take its Step 1 assertions and its Step 3 instruction together and ask: **can this test pass against that implementation?** A plan can state a rule, give a correct example of it, and still write a test that violates it — the two artifacts are drafted separately and nothing in the five checks executes them against each other.
+
+**The trap this catches, which is GDScript-specific:** GUT's `assert_eq` on two Objects is **reference identity**, not value equality. So an assertion comparing a post-call board read against a reference captured *before* the call passes **only if the call mutates that object in place**. Where the plan's own constraint says the call **replaces** — which most of this project's settled decisions favour, via `relocated()` and friends — the test and the constraint cannot both hold. Assert against the *result* of the replacement, or against a freshly derived value, never against the pre-call reference.
+
+This is not hypothetical: `documentation/plans/2026-11-25-board-piece-placement-seam-plan.md` shipped it twice, at line 630 (`assert_eq(state.placements[0], placeable, "one object, not a copy")`) and line 881 (`assert_eq(state.altar_hexes(), altar.hexes, ...)`), each contradicting its own task's Step 3 about 30 lines later. That plan also had the correct shape at line 549 (`assert_eq(state.altar_hexes(), moved)`, comparing against `relocated()`'s result), so the rule was known and the samples still broke it. Both implementing agents caught it and chose replacement; the cost was paid twice at implementation time instead of once here. See [#125](https://github.com/snackpackgames/cosmicparade/issues/125).
+
+A plan that fails this check is fixed here, not left for the implementer to adjudicate: an unattended agent that resolves it the other way will write mutation into production.
 
 ## Resuming after the merge pause
 
