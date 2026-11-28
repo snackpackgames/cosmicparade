@@ -107,18 +107,23 @@ func _prism() -> ArrayMesh:
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var corners := _corners()
 	var rise := Vector3(0.0, PRISM_HEIGHT, 0.0)
+	# Clockwise, the same winding `HexSpace._build_mesh` uses and for the same reason: Godot culls
+	# against it, so each triangle is ordered with its right-hand normal pointing away from the
+	# side the face is seen from, opposite to the shading normal. Wound the other way the piece
+	# is inside out and reads as a dent in the board.
+	# https://github.com/snackpackgames/cosmicparade/issues/161
 	for i in 6:
 		var next := (i + 1) % 6
 		_add(tool, rise, Vector3.UP)
-		_add(tool, corners[next] + rise, Vector3.UP)
 		_add(tool, corners[i] + rise, Vector3.UP)
+		_add(tool, corners[next] + rise, Vector3.UP)
 		var normal := ((corners[i] + corners[next]) * 0.5).normalized()
 		_add(tool, corners[i] + rise, normal)
+		_add(tool, corners[next], normal)
 		_add(tool, corners[next] + rise, normal)
-		_add(tool, corners[next], normal)
 		_add(tool, corners[i] + rise, normal)
-		_add(tool, corners[next], normal)
 		_add(tool, corners[i], normal)
+		_add(tool, corners[next], normal)
 	return tool.commit()
 
 
