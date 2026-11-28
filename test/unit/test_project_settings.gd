@@ -21,26 +21,31 @@ const EXPECTED_LAYER_NAMES := {
 	26: "tile",
 }
 
-## Every debug-only affordance, and the key it answers to. The six on digits were raw keycodes
-## sitting on F5 to F9 and F12 until they were moved: F5 to F8 are the Godot editor's Play, Play
-## Scene, Pause and Stop, so with the realm scene launched from the editor -- its documented
-## route -- F8 stopped the running scene rather than lifting a stool. They are actions now so
-## this table covers them; being raw keycodes is exactly why nothing caught the collision.
+## Every debug-only affordance, and the key it answers to. All eight sat on the function row until
+## they were moved: six were raw keycodes on F5 to F9 and F12, and F5 to F8 are the Godot editor's
+## Play, Play Scene, Pause and Stop, so with the realm scene launched from the editor -- its
+## documented route -- F8 stopped the running scene rather than lifting a stool. They are all
+## actions now so this table covers them; being raw keycodes is exactly why nothing caught the
+## collision.
 ## https://github.com/snackpackgames/cosmicparade/issues/85
 const EXPECTED_DEBUG_ACTIONS := {
-	"debug_grant_adherents": KEY_F10,
-	"debug_empty_vessel": KEY_F11,
 	"debug_begin_wing_swell": KEY_1,
 	"debug_lift_wing": KEY_2,
 	"debug_cycle_wing_figure": KEY_3,
 	"debug_lift_furniture": KEY_4,
 	"debug_take_ring": KEY_5,
 	"debug_lift_shrine": KEY_6,
+	"debug_grant_adherents": KEY_7,
+	"debug_empty_vessel": KEY_8,
 }
 
-## The editor shortcuts no debug affordance may sit on, so a future remap cannot walk back onto
-## them. Play, Play Scene, Pause Scene and Stop.
-const EDITOR_RUN_CONTROLS := [KEY_F5, KEY_F6, KEY_F7, KEY_F8]
+## The whole function row is off limits to a debug affordance, so a future remap cannot walk back
+## onto it. F5 to F8 are the editor's Play, Play Scene, Pause Scene and Stop; the rest is claimed
+## by window managers and browsers often enough that none of it is worth the trouble.
+const FUNCTION_KEYS := [
+	KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6,
+	KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12,
+]
 
 const EXPECTED_REALM_ACTIONS := [
 	"realm_lift_or_place", "realm_cancel", "realm_rotate",
@@ -131,18 +136,18 @@ func test_every_debug_affordance_is_a_declared_action_on_its_key() -> void:
 		)
 
 
-func test_no_debug_affordance_sits_on_an_editor_run_control() -> void:
+func test_no_debug_affordance_sits_on_a_function_key() -> void:
 	# The regression this pins: F8 is the editor's Stop, so pressing it in a scene launched from
-	# the editor closed the game instead of lifting a stool. A unit test cannot press a key in
-	# the editor, but it can refuse the four keycodes outright.
-	for keycode: Key in EDITOR_RUN_CONTROLS:
+	# the editor closed the game instead of lifting a stool. A unit test cannot press a key in the
+	# editor or in a window manager, but it can refuse the whole row outright.
+	for keycode: Key in FUNCTION_KEYS:
 		var event := InputEventKey.new()
 		event.physical_keycode = keycode
 		event.pressed = true
 		for action: String in EXPECTED_DEBUG_ACTIONS:
 			assert_false(
 				InputMap.event_is_action(event, action),
-				"%s must not answer to %s, an editor run control" % [
+				"%s must not answer to %s: the function row belongs to the editor and the desktop" % [
 					action, OS.get_keycode_string(keycode)
 				]
 			)

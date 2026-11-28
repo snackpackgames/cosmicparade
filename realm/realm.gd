@@ -10,12 +10,14 @@ extends Node3D
 ## DEBUG ONLY, and only in a debug build: `1` buys a wing Swell and hands the player the wing to
 ## site, `2` lifts the wing under the cursor, `3` cycles which figure a wing Swell will hand over,
 ## `4` lifts a placeholder stool from "inventory", `5` buys a ring Swell, `6` lifts a shrine from
-## stock, F10 grants adherents and F11 empties the vessel of the shrine under the cursor.
+## stock, `7` grants adherents and `8` empties the vessel of the shrine under the cursor.
 ##
-## The first six are on digits because **F5 to F8 are the Godot editor's own run controls** — Play,
-## Play Scene, Pause and Stop. This scene is reached with F6, so the editor is the normal way to
-## launch it, and F8 stopped the running scene instead of lifting a stool. Every affordance is now
-## a declared InputMap action, which is what puts its binding under `test_project_settings.gd`.
+## They are on digits and not function keys because **F5 to F8 are the Godot editor's own run
+## controls** — Play, Play Scene, Pause and Stop. This scene is reached with F6, so the editor is
+## the normal way to launch it, and F8 stopped the running scene instead of lifting a stool. The
+## rest of the row is no safer: F11 is the fullscreen toggle in most Linux window managers, which
+## never passes it on. Every affordance is a declared InputMap action, which is what puts its
+## binding under `test_project_settings.gd`.
 ##
 ## All stand in for systems that do not exist yet (the inventory, adr/0011, how adherents are
 ## earned, and the parade that is the only clock), and `lift_from_inventory`, `take_ring`,
@@ -232,17 +234,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_debug_input(event)
 
 
-# DEBUG ONLY. Every affordance is a declared InputMap action, which is what lets
-# `test_project_settings.gd` pin its binding: the six that were raw keycodes had no test, and that
-# is how they came to sit on the editor's own run controls unnoticed.
+# DEBUG ONLY, in key order, `1` to `8`. Every affordance is a declared InputMap action, which is
+# what lets `test_project_settings.gd` pin its binding: the six that were raw keycodes had no test,
+# and that is how they came to sit on the editor's own run controls unnoticed.
 # https://github.com/snackpackgames/cosmicparade/issues/76
 func _debug_input(event: InputEvent) -> void:
-	if event.is_action_pressed("debug_grant_adherents"):
-		balance.grant(Swell.DEBUG_GRANT)
-		_refresh_readout()
-	elif event.is_action_pressed("debug_empty_vessel"):
-		empty_vessel_under_cursor()
-	elif event.is_action_pressed("debug_begin_wing_swell"):
+	if event.is_action_pressed("debug_begin_wing_swell"):
 		begin_wing_swell(WING_SHAPES[_wing_figure])
 	elif event.is_action_pressed("debug_lift_wing"):
 		lift_wing_under_cursor()
@@ -254,6 +251,11 @@ func _debug_input(event: InputEvent) -> void:
 		take_ring()
 	elif event.is_action_pressed("debug_lift_shrine"):
 		lift_from_stock()
+	elif event.is_action_pressed("debug_grant_adherents"):
+		balance.grant(Swell.DEBUG_GRANT)
+		_refresh_readout()
+	elif event.is_action_pressed("debug_empty_vessel"):
+		empty_vessel_under_cursor()
 
 
 # Rotating while idle over a piece lifts it, turned one step. Furniture only, never a wing:
