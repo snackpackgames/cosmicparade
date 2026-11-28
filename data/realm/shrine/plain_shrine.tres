@@ -1,15 +1,13 @@
-[gd_resource type="Resource" script_class="Shrine" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="Shrine" format=3 uid="uid://clhr4mcb6ixhn"]
 
-[ext_resource type="Script" path="res://realm/shrine.gd" id="1_shrine"]
-[ext_resource type="Script" path="res://realm/offering_vessel.gd" id="2_vessel"]
+[ext_resource type="Script" uid="uid://cucffmrh2ds5w" path="res://realm/placement_criterion.gd" id="1_knn8n"]
+[ext_resource type="Script" uid="uid://18i5fxxxnp27" path="res://realm/shrine.gd" id="1_shrine"]
+[ext_resource type="Script" uid="uid://hqy7c8i0aivb" path="res://realm/offering_vessel.gd" id="2_vessel"]
 
 [sub_resource type="Resource" id="3_vessel_inst"]
 script = ExtResource("2_vessel")
-reach = 2
 
 [resource]
 script = ExtResource("1_shrine")
 piece_name = "Shrine"
 zone_source = SubResource("3_vessel_inst")
-shape = 0
-anchor = Vector2i(0, 0)

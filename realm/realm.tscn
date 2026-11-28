@@ -1,48 +1,47 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://5pnvnv21sqk4"]
 
-[ext_resource type="Script" path="res://realm/realm.gd" id="1_realm"]
-[ext_resource type="Script" path="res://realm/realm_board.gd" id="2_board"]
-
-[ext_resource type="Script" path="res://realm/hex_cursor.gd" id="3_cursor"]
-[ext_resource type="Script" path="res://realm/carry.gd" id="4_carry"]
-[ext_resource type="Script" path="res://realm/furniture_view.gd" id="5_view"]
-
-[ext_resource type="Script" path="res://realm/refusal_display.gd" id="6_refusal"]
-[ext_resource type="Script" path="res://realm/spill_display.gd" id="7_spill"]
-[ext_resource type="Script" path="res://realm/requirement_list.gd" id="8_list"]
-[ext_resource type="Script" path="res://realm/debug_readout.gd" id="9_readout"]
-[ext_resource type="Script" path="res://realm/meld_readout.gd" id="10_meld"]
+[ext_resource type="Script" uid="uid://u60i0oi8y74s" path="res://realm/realm.gd" id="1_realm"]
+[ext_resource type="Script" uid="uid://bjk7ytky15587" path="res://realm/realm_board.gd" id="2_board"]
+[ext_resource type="Script" uid="uid://ch0f2tnen7uc0" path="res://realm/hex_cursor.gd" id="3_cursor"]
+[ext_resource type="Script" uid="uid://d0ck3kj7ayc8v" path="res://realm/carry.gd" id="4_carry"]
+[ext_resource type="Script" uid="uid://d15pt65120sls" path="res://realm/furniture_view.gd" id="5_view"]
+[ext_resource type="Script" uid="uid://h7n233dv71hx" path="res://realm/refusal_display.gd" id="6_refusal"]
+[ext_resource type="Script" uid="uid://dtdb2rq37xkon" path="res://realm/spill_display.gd" id="7_spill"]
+[ext_resource type="Script" uid="uid://cushggibhvyjb" path="res://realm/requirement_list.gd" id="8_list"]
+[ext_resource type="Script" uid="uid://bb2j64h1fep07" path="res://realm/debug_readout.gd" id="9_readout"]
+[ext_resource type="Script" uid="uid://chvff5kpvlm1y" path="res://realm/meld_readout.gd" id="10_meld"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
 background_color = Color(0.05, 0.04, 0.12, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.6, 0.6, 0.75, 1)
+ambient_light_energy = 0.45
 
-[node name="Realm" type="Node3D"]
+[node name="Realm" type="Node3D" unique_id=817143971]
 script = ExtResource("1_realm")
 
-[node name="RealmBoard" type="Node3D" parent="."]
+[node name="RealmBoard" type="Node3D" parent="." unique_id=959078457]
 script = ExtResource("2_board")
 
-[node name="HexCursor" type="Node3D" parent="."]
+[node name="HexCursor" type="Node3D" parent="." unique_id=1381211653]
 script = ExtResource("3_cursor")
 
-[node name="Carry" type="Node" parent="."]
+[node name="Carry" type="Node" parent="." unique_id=1311217888]
 script = ExtResource("4_carry")
 
-[node name="FurnitureView" type="Node3D" parent="."]
+[node name="FurnitureView" type="Node3D" parent="." unique_id=1063481449]
 script = ExtResource("5_view")
 
-[node name="RefusalDisplay" type="Node3D" parent="."]
+[node name="RefusalDisplay" type="Node3D" parent="." unique_id=645352438]
 script = ExtResource("6_refusal")
 
-[node name="SpillDisplay" type="Node3D" parent="."]
+[node name="SpillDisplay" type="Node3D" parent="." unique_id=1532602176]
 script = ExtResource("7_spill")
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=102619421]
 
-[node name="RequirementList" type="Control" parent="HUD"]
+[node name="RequirementList" type="Control" parent="HUD" unique_id=1323973295]
 unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 0
@@ -53,17 +52,24 @@ offset_bottom = 216.0
 mouse_filter = 2
 script = ExtResource("8_list")
 
-[node name="DebugReadout" type="CanvasLayer" parent="."]
+[node name="DebugReadout" type="CanvasLayer" parent="." unique_id=1616607596]
 script = ExtResource("9_readout")
 
-[node name="MeldReadout" type="CanvasLayer" parent="."]
+[node name="MeldReadout" type="CanvasLayer" parent="." unique_id=1126764010]
 script = ExtResource("10_meld")
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(0.819152, -0.3687, 0.43944, 0, 0.766044, 0.642788, -0.573576, -0.52654, 0.627507, 4.4, 8.0, 7.5)
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1123218589]
+transform = Transform3D(0.819152, -0.3687, 0.43944, 0, 0.766044, 0.642788, -0.573576, -0.52654, 0.627507, 4.4, 8, 7.5)
 
-[node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.7, 0.714, 0, -0.714, 0.7, 0, 5, 0)
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=56322186]
+transform = Transform3D(0.788011, 0.44287, -0.427674, 0, 0.694658, 0.71934, 0.615662, -0.566848, 0.547398, 0, 5, 0)
+light_energy = 1.7
+shadow_enabled = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="Fill" type="DirectionalLight3D" parent="." unique_id=1908347726]
+transform = Transform3D(-0.788011, -0.19025, 0.585529, 0, 0.951057, 0.309017, -0.615661, 0.243509, -0.749443, 0, 5, 0)
+light_color = Color(0.72, 0.78, 1, 1)
+light_energy = 0.45
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1644255505]
 environment = SubResource("Environment_1")
