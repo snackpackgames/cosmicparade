@@ -7,16 +7,20 @@ extends Node3D
 ## https://github.com/snackpackgames/cosmicparade/issues/31
 ## https://github.com/snackpackgames/cosmicparade/issues/54
 ##
-## DEBUG ONLY, and only in a debug build: F5 buys a wing Swell and hands the player the wing to
-## site, F6 lifts the wing under the cursor, F7 cycles which figure a wing Swell will hand over,
-## F8 lifts a placeholder stool from "inventory", F9 buys a ring Swell, F10 grants adherents, F11
-## empties the vessel of the shrine under the cursor and F12 lifts a shrine from stock. F10 and
-## F11 are the InputMap actions `debug_grant_adherents` and `debug_empty_vessel`; the rest are
-## raw keycodes, and the wing pair moved down from F10/F11 to make room. All stand in for systems
-## that do not exist yet (the inventory, adr/0011, how adherents are earned, and the parade that
-## is the only clock), and `lift_from_inventory`, `take_ring`, `begin_wing_swell`,
-## `lift_wing_under_cursor`, `lift_from_stock` and `empty_vessel_under_cursor` are the seams
-## those will attach to.
+## DEBUG ONLY, and only in a debug build: `1` buys a wing Swell and hands the player the wing to
+## site, `2` lifts the wing under the cursor, `3` cycles which figure a wing Swell will hand over,
+## `4` lifts a placeholder stool from "inventory", `5` buys a ring Swell, `6` lifts a shrine from
+## stock, F10 grants adherents and F11 empties the vessel of the shrine under the cursor.
+##
+## The first six are on digits because **F5 to F8 are the Godot editor's own run controls** — Play,
+## Play Scene, Pause and Stop. This scene is reached with F6, so the editor is the normal way to
+## launch it, and F8 stopped the running scene instead of lifting a stool. Every affordance is now
+## a declared InputMap action, which is what puts its binding under `test_project_settings.gd`.
+##
+## All stand in for systems that do not exist yet (the inventory, adr/0011, how adherents are
+## earned, and the parade that is the only clock), and `lift_from_inventory`, `take_ring`,
+## `begin_wing_swell`, `lift_wing_under_cursor`, `lift_from_stock` and `empty_vessel_under_cursor`
+## are the seams those will attach to.
 ## https://github.com/snackpackgames/cosmicparade/issues/85
 
 signal piece_returned(piece: BoardPiece)
@@ -228,10 +232,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_debug_input(event)
 
 
-# DEBUG ONLY. The two declared actions first, then the raw function keys. #76 named
-# `debug_grant_adherents` as an InputMap action and `debug_empty_vessel` follows it; the older
-# affordances stayed raw keycodes, and the wing pair moved to F5 and F6 to clear F10 and F11 for
-# the actions. Nothing was dropped: all six still have a key.
+# DEBUG ONLY. Every affordance is a declared InputMap action, which is what lets
+# `test_project_settings.gd` pin its binding: the six that were raw keycodes had no test, and that
+# is how they came to sit on the editor's own run controls unnoticed.
 # https://github.com/snackpackgames/cosmicparade/issues/76
 func _debug_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_grant_adherents"):
@@ -239,22 +242,17 @@ func _debug_input(event: InputEvent) -> void:
 		_refresh_readout()
 	elif event.is_action_pressed("debug_empty_vessel"):
 		empty_vessel_under_cursor()
-	elif event is InputEventKey and event.pressed and not event.echo:
-		_debug_key((event as InputEventKey).keycode)
-
-
-func _debug_key(keycode: Key) -> void:
-	if keycode == KEY_F5:
+	elif event.is_action_pressed("debug_begin_wing_swell"):
 		begin_wing_swell(WING_SHAPES[_wing_figure])
-	elif keycode == KEY_F6:
+	elif event.is_action_pressed("debug_lift_wing"):
 		lift_wing_under_cursor()
-	elif keycode == KEY_F7:
+	elif event.is_action_pressed("debug_cycle_wing_figure"):
 		_wing_figure = (_wing_figure + 1) % WING_SHAPES.size()
-	elif keycode == KEY_F8:
+	elif event.is_action_pressed("debug_lift_furniture"):
 		lift_from_inventory(DEBUG_PIECE)
-	elif keycode == KEY_F9:
+	elif event.is_action_pressed("debug_take_ring"):
 		take_ring()
-	elif keycode == KEY_F12:
+	elif event.is_action_pressed("debug_lift_shrine"):
 		lift_from_stock()
 
 

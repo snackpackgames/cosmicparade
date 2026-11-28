@@ -21,12 +21,26 @@ const EXPECTED_LAYER_NAMES := {
 	26: "tile",
 }
 
-## The two debug-only affordances, and the keys they answer to.
+## Every debug-only affordance, and the key it answers to. The six on digits were raw keycodes
+## sitting on F5 to F9 and F12 until they were moved: F5 to F8 are the Godot editor's Play, Play
+## Scene, Pause and Stop, so with the realm scene launched from the editor -- its documented
+## route -- F8 stopped the running scene rather than lifting a stool. They are actions now so
+## this table covers them; being raw keycodes is exactly why nothing caught the collision.
 ## https://github.com/snackpackgames/cosmicparade/issues/85
 const EXPECTED_DEBUG_ACTIONS := {
 	"debug_grant_adherents": KEY_F10,
 	"debug_empty_vessel": KEY_F11,
+	"debug_begin_wing_swell": KEY_1,
+	"debug_lift_wing": KEY_2,
+	"debug_cycle_wing_figure": KEY_3,
+	"debug_lift_furniture": KEY_4,
+	"debug_take_ring": KEY_5,
+	"debug_lift_shrine": KEY_6,
 }
+
+## The editor shortcuts no debug affordance may sit on, so a future remap cannot walk back onto
+## them. Play, Play Scene, Pause Scene and Stop.
+const EDITOR_RUN_CONTROLS := [KEY_F5, KEY_F6, KEY_F7, KEY_F8]
 
 const EXPECTED_REALM_ACTIONS := [
 	"realm_lift_or_place", "realm_cancel", "realm_rotate",
@@ -98,10 +112,10 @@ func test_the_carry_verb_is_input_map_actions_not_mouse_events() -> void:
 		assert_true(has_joypad, "%s should be bound for gamepad" % action)
 
 
-func test_the_two_debug_affordances_are_actions_on_f10_and_f11() -> void:
+func test_every_debug_affordance_is_a_declared_action_on_its_key() -> void:
 	# https://github.com/snackpackgames/cosmicparade/issues/76 named
 	# `debug_grant_adherents` as an InputMap action rather than a raw keycode, so
-	# project.godot has to carry both of them. No gamepad binding: these stand in for
+	# project.godot has to carry all of them. No gamepad binding: these stand in for
 	# systems that do not exist, not for the carry verb.
 	for action: String in EXPECTED_DEBUG_ACTIONS:
 		var keycode: Key = EXPECTED_DEBUG_ACTIONS[action]
@@ -115,3 +129,20 @@ func test_the_two_debug_affordances_are_actions_on_f10_and_f11() -> void:
 			InputMap.event_is_action(event, action),
 			"%s should answer to %s" % [action, OS.get_keycode_string(keycode)]
 		)
+
+
+func test_no_debug_affordance_sits_on_an_editor_run_control() -> void:
+	# The regression this pins: F8 is the editor's Stop, so pressing it in a scene launched from
+	# the editor closed the game instead of lifting a stool. A unit test cannot press a key in
+	# the editor, but it can refuse the four keycodes outright.
+	for keycode: Key in EDITOR_RUN_CONTROLS:
+		var event := InputEventKey.new()
+		event.physical_keycode = keycode
+		event.pressed = true
+		for action: String in EXPECTED_DEBUG_ACTIONS:
+			assert_false(
+				InputMap.event_is_action(event, action),
+				"%s must not answer to %s, an editor run control" % [
+					action, OS.get_keycode_string(keycode)
+				]
+			)
